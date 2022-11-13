@@ -1,6 +1,11 @@
 var sqlite3 = require('sqlite3');
 var mkdirp = require('mkdirp');
 var crypto = require('crypto');
+let fs = require('fs');
+
+if (!fs.existsSync('./uploads')){
+    fs.mkdirSync('./uploads');
+}
 
 mkdirp.sync('./var/db');
 
