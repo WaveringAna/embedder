@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Express • TodoMVC</title>
+		<link rel="stylesheet" href="/css/base.css">
+		<link rel="stylesheet" href="/css/index.css">
+		<link rel="stylesheet" href="/css/app.css">
+		<script>
+function copyURI(evt) {
+	evt.preventDefault();
+    navigator.clipboard.writeText(absolutePath(evt.target.getAttribute('src'))).then(() => {
+      /* clipboard successfully set */
+      console.log("copied")
+    }, () => {
+      /* clipboard write failed */
+      console.log("failed")
+    });
+}
+
+function absolutePath (href) {
+	let link = document.createElement("a");
+	link.href = href;
+	return link.href;
+}
+	</script>
+	</head>
+	<body>
+		<section class="todoapp">
+			<nav class="nav">
+				<ul>
+					<li class="user"><%= user.name || user.username %></li>
+					<li>
+						<form action="/logout" method="post">
+							<button class="logout" type="submit">Sign out</button>
+						</form>
+					</li>
+				</ul>
+			</nav>
+			<header class="header">
+				<h1>Embedder</h1>
+				<form action="/" method="post" encType="multipart/form-data">
+					<input class="new-todo" type="text" name="title" placeholder="File Title (optional)">
+					<input class="new-todo" type="file" name="fileupload">
+					<input type="submit">
+				</form>
+			</header>
+			<% if (Count > 0) { %>
+			<section class="main">
+				<ul class="todo-list">
+					<% files.forEach(function(file) { %>
+					<li>
+						<form action="<%= file.url %>" method="post">
+							<div class="view">
+								<img src="/uploads/<%=file.path %>" height="400" onclick="copyURI(event)">
+								<label ondblclick="this.closest('li').className = this.closest('li').className + ' editing'; this.closest('li').querySelector('input.edit').focus(); this.closest('li').querySelector('input.edit').value = ''; this.closest('li').querySelector('input.edit').value = '<%= file.path %>';"><%= file.path %></label>
+								<button class="destroy" form="delete-<%= file.path %>"></button>
+							</div>
+						</form>
+						<form name="delete-<%= file.path %>" id="delete-<%= file.path %>" action="<%= file.url %>/delete" method="post">
+						</form>
+					</li>
+					<% }); %>
+				</ul>
+			</section>
+			<% } %>
+		</section>
+		<footer class="info">
+			<p><a href="https://l.nekomimi.pet/project">Created by Wavering Ana</a></p>
+			<p><a href="https://github.com/WaveringAna/Embedder">Github</a></p>
+		</footer>
+	</body>
+</html>
