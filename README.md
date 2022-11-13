@@ -2,7 +2,7 @@
 
 A media host specialized in good looking embeds for services like Discord
 
-![Imgur Image](https://i.imgur.com/prEZnmT.mp4)
+<img src="readmegif.gif">
 
 ## Run
 
