@@ -7,24 +7,7 @@
 		<link rel="stylesheet" href="/css/base.css">
 		<link rel="stylesheet" href="/css/index.css">
 		<link rel="stylesheet" href="/css/app.css">
-		<script>
-function copyURI(evt) {
-	evt.preventDefault();
-    navigator.clipboard.writeText(absolutePath(evt.target.getAttribute('src'))).then(() => {
-      /* clipboard successfully set */
-      console.log("copied")
-    }, () => {
-      /* clipboard write failed */
-      console.log("failed")
-    });
-}
-
-function absolutePath (href) {
-	let link = document.createElement("a");
-	link.href = href;
-	return link.href;
-}
-	</script>
+		<script src="/js/index.js"></script>
 	</head>
 	<body>
 		<section class="todoapp">
@@ -41,9 +24,13 @@ function absolutePath (href) {
 			<header class="header">
 				<h1>Embedder</h1>
 				<form action="/" method="post" encType="multipart/form-data">
-					<input class="new-todo" type="text" name="title" placeholder="File Title (optional)">
-					<input class="new-todo" type="file" name="fileupload">
-					<input type="submit">
+					<!---->
+					<div id="dropArea">
+						<p class="dragregion">Upload a file or drag n' drop into the dashed region</p>
+						<br>
+						<p class="dragregion"><input class="" type="file" id="fileupload" name="fileupload"><input type="submit"></p>
+						<p class="dragregion">Click the file to copy the url</p>
+					</div>
 				</form>
 			</header>
 			<% if (Count > 0) { %>
@@ -53,8 +40,8 @@ function absolutePath (href) {
 					<li>
 						<form action="<%= file.url %>" method="post">
 							<div class="view">
-								<img src="/uploads/<%=file.path %>" height="400" onclick="copyURI(event)">
-								<label ondblclick="this.closest('li').className = this.closest('li').className + ' editing'; this.closest('li').querySelector('input.edit').focus(); this.closest('li').querySelector('input.edit').value = ''; this.closest('li').querySelector('input.edit').value = '<%= file.path %>';"><%= file.path %></label>
+								<img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)">
+								<label text-align:"center"><%= file.path %></label>
 								<button class="destroy" form="delete-<%= file.path %>"></button>
 							</div>
 						</form>

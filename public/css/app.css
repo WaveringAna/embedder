@@ -53,3 +53,19 @@
 	background-repeat: no-repeat;
 	background-position: center left;
 }
+
+#dropArea {
+  border: 2px dashed #ccc;
+  border-radius: 20px;
+  width: 100%;
+  font-family: sans-serif;
+  padding: 50px 0px 50px 0px;
+}
+
+#dropArea.highlight {
+  border-color: purple;
+}
+
+.dragregion {
+	text-align: center;
+}
