@@ -46,7 +46,7 @@ function fetchMedia(req, res, next) {
         url: '/' + row.id
       }
     });
-    res.locals.files = files;
+    res.locals.files = files.reverse(); //reverse so newest files appear first
     res.locals.Count = files.length;
     next();
   });

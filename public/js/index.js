@@ -15,6 +15,10 @@ function absolutePath (href) {
 	return link.href;
 }
 
+function extension(string) {
+  return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
+}
+
 let dropArea = document.getElementById("dropArea");
 
 ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
