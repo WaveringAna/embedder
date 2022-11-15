@@ -18,9 +18,20 @@ const storage = multer.diskStorage({
     else
       cb(null, prefix + '-' + req.body.title + extension(file.originalname))
   }
-})
+});
 
-let upload = multer({ storage: storage });
+const fileFilter = function(req, file, cb) {
+    if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg" || file.mimetype == "image/gif" || file.mimetype == "image/webp"
+      || file.mimetype == "video/mp4" || file.mimetype == "video/mov" || file.mimetype == "video/webm"
+      || file.mimetype == "audio/mpeg" || file.mimetype == "audio/ogg") {
+        cb(null, true)
+      } else {
+        cb(null, false);
+        //return cb(new Error('Only media files allowed'));
+      }
+  }
+
+let upload = multer({ storage: storage, fileFilter: fileFilter });
 
 let db = require('../db');
 
