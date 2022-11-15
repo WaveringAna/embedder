@@ -77,7 +77,20 @@ router.post('/:id(\\d+)/delete', function(req, res, next) {
   db.all('SELECT path FROM media WHERE id = ?', [ req.params.id ], function(err, path) {
     if (err) { return next(err); }
     fs.unlink('uploads/' + path[0].path, (err => {
-      if (err) console.log(err);
+      if (err) {
+        console.log(err)
+        if (err.errno = -4058) { //File just doesnt exist anymore
+          db.run('DELETE FROM media WHERE id = ?', [
+            req.params.id
+          ], function(err) {
+            if (err) { return next(err); }
+              return res.redirect('/');
+          });
+        } else {
+          console.log(err)
+          return res.redirect('/');
+        }
+      }
       else {
         console.log(`Deleted ${path}`);
         //Callback Hell :D
