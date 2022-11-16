@@ -18,7 +18,7 @@ $ npm install
 $ node db.js
 $ npm start
 ```
-Default username is admin with teh password being whatever EBPASS is
+Default username is admin with the password being whatever EBPASS is
 
 Docker
 ```
