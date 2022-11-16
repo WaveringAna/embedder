@@ -1,10 +1,16 @@
 let express = require('express');
 let multer = require('multer');
 
+let db = require('../db');
 let fs = require('fs');
 
 function extension(string) {
   return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
+}
+
+function extension(str){
+  let file = str.split('/').pop();
+  return [file.substr(0,file.lastIndexOf('.')),file.substr(file.lastIndexOf('.'),file.length)]
 }
 
 const storage = multer.diskStorage({
@@ -12,11 +18,22 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename : function(req, file, cb) {
-    let prefix = Date.now();
-    if (req.body.title == '' || req.body.title  == null || req.body.title == undefined)
-      cb(null, prefix + '-' + file.originalname)
-    else
-      cb(null, prefix + '-' + req.body.title + extension(file.originalname))
+    db.all('SELECT * FROM media WHERE path = ?', [file.originalname], function (err, exists) {
+      if (exists.length != 0) {
+        let suffix = new Date().getTime() / 1000;
+        let nameAndExtension = extension(file.originalname);
+
+        if (req.body.title == '' || req.body.title  == null || req.body.title == undefined)
+          cb(null, nameAndExtension[0] + '-' + suffix + nameAndExtension[1])
+        else
+          cb(null, req.body.title + '-' + suffix + nameAndExtension[1])
+      } else {
+        if (req.body.title == '' || req.body.title  == null || req.body.title == undefined)
+          cb(null, file.originalname)
+        else
+          cb(null, req.body.title + nameAndExtension[1])
+      }
+    })
   }
 });
 
@@ -32,8 +49,6 @@ const fileFilter = function(req, file, cb) {
   }
 
 let upload = multer({ storage: storage, fileFilter: fileFilter });
-
-let db = require('../db');
 
 function fetchMedia(req, res, next) {
   db.all('SELECT * FROM media', (err, rows) => {
