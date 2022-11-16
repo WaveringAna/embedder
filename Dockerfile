@@ -7,4 +7,4 @@ RUN npm install
 # Package app source
 COPY . .
 
-ENTRYPOINT ["./docker-entrypoint"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
