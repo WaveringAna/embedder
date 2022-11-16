@@ -75,12 +75,15 @@ router.get('/', function (req, res, next) {
 
 router.post('/', upload.array('fileupload'), function(req, res, next) {
   if (!req.files || Object.keys(req.files).length === 0) {
+    console.log(req)
     return res.status(400).send('No files were uploaded.');
   }
 
   for (file in req.files) {
     db.run('INSERT INTO media (path) VALUES (?)', [req.files[file].filename], function (err) {
-    if (err) return next(err);
+    if (err) { console.log(err)
+      return next(err);
+    }
       return res.redirect('/');
     })
   }

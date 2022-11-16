@@ -31,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-	secret: process.env.EBSECRET || 'keyboard cat',
+	secret: process.env.EBSECRET || 'pleasechangeme',
 	resave: false,
 	saveUninitialized: false,
 	store: new SQLiteStore({

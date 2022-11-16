@@ -47,11 +47,32 @@ function unhighlight(e) {
 }
 
 dropArea.addEventListener('drop', handleDrop, false)
+window.addEventListener('paste', handlePaste);
 
 function handleDrop(e) {
   let dt = e.dataTransfer
   let files = dt.files
   handleFiles(files)
+}
+
+function handlePaste(e) {
+    // Get the data of clipboard
+    const clipboardItems = e.clipboardData.items;
+    const items = [].slice.call(clipboardItems).filter(function (item) {
+        // Filter the image items only
+        return item.type.indexOf('image') !== -1;
+    });
+    if (items.length === 0) {
+        return;
+    }
+
+    const item = items[0];
+    // Get the blob of image
+    const blob = item.getAsFile();
+    console.log(blob)
+
+    uploadFile(blob)
+    previewFile(blob);
 }
 
 function handleFiles(files) {
