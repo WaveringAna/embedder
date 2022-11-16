@@ -21,8 +21,7 @@ $ npm start
 
 Docker
 ```
-docker build . -t embedder
-docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=pass -e EBSECRET=4jkdmakl2l embedder
+docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=pass -e EBSECRET=4jkdmakl2l waveringana/embedder:latest
 ```
 
 Docker Compose
@@ -39,7 +38,7 @@ services:
         volumes:
             - embedderdb:/var/db
             - embedderuploads:/uploads
-        image: embedder
+        image: waveringana/embedder:latest
         network_mode: bridge
 volumes:
     embedderdb:
