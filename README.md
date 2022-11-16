@@ -4,7 +4,7 @@ A media host specialized in good looking embeds for services like Discord. No fi
 
 <img src="readmegif.gif">
 
-Upcoming Features: smooth out mp4s similar to imgur and gfycat
+Upcoming Features: smooth out mp4s similar to imgur and gfycat, guest user accounts
 
 ## Run
 
@@ -18,6 +18,7 @@ $ npm install
 $ node db.js
 $ npm start
 ```
+Default username is admin with teh password being whatever EBPASS is
 
 Docker
 ```
