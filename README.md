@@ -1,15 +1,17 @@
 # Embedder
 
-A media host specialized in good looking embeds for services like Discord
+A media host specialized in good looking embeds for services like Discord. No file size limits. No compression.
 
 <img src="readmegif.gif">
+
+Upcoming Features: smooth out mp4s similar to imgur and gfycat
 
 ## Run
 
 Source:
 ```Bash
 EBPASS=changeme
-EBPORT=3000
+EBPORT=4000
 EBSECRET=4jkdmakl2l #jwt session secret
 
 $ npm install
@@ -33,6 +35,7 @@ services:
         environment:
             - EBPORT=4000
             - EBPASS=changeme
+            - EBSECRET=4jkdmakl2l
         volumes:
             - embedderdb:/var/db
             - embedderuploads:/uploads

@@ -62,15 +62,17 @@ router.get('/', function (req, res, next) {
     res.render('index', { user: req.user });
 });
 
-router.post('/', upload.single('fileupload'), function(req, res, next) {
-  if (!req.file || Object.keys(req.file).length === 0) {
+router.post('/', upload.array('fileupload'), function(req, res, next) {
+  if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
 
-  db.run('INSERT INTO media (path) VALUES (?)', [req.file.filename], function (err) {
+  for (file in req.files) {
+    db.run('INSERT INTO media (path) VALUES (?)', [req.files[file].filename], function (err) {
     if (err) return next(err);
-    return res.redirect('/');
-  })
+      return res.redirect('/');
+    })
+  }
 });
 
 router.post('/:id(\\d+)/delete', function(req, res, next) {
