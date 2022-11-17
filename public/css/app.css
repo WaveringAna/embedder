@@ -73,3 +73,16 @@
 .image {
 	width: 100%;
 }
+
+div.nonmedia {
+	height: 100px;
+	width: 100%;
+}
+
+div.nonmedia p {
+	color: #444;
+	font-size: 20px;
+	font-weight: 400;
+	line-height: 100px;
+	text-align: center;
+}

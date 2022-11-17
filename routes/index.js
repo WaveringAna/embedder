@@ -33,18 +33,28 @@ const storage = multer.diskStorage({
   }
 });
 
-const fileFilter = function(req, file, cb) {
-    if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg" || file.mimetype == "image/gif" || file.mimetype == "image/webp"
-      || file.mimetype == "video/mp4" || file.mimetype == "video/mov" || file.mimetype == "video/webm"
-      || file.mimetype == "audio/mpeg" || file.mimetype == "audio/ogg") {
-        cb(null, true)
-      } else {
-        cb(null, false);
-        //return cb(new Error('Only media files allowed'));
-      }
-  }
+let allowedMimeTypes = [
+  'image/png',
+  'image/jpg',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'video/mp4',
+  'video/mov',
+  'video/webm',
+  'audio/mpeg',
+  'audio/ogg'
+]
 
-let upload = multer({ storage: storage, fileFilter: fileFilter });
+const fileFilter = function(req, file, cb) {
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+}
+
+let upload = multer({ storage: storage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 
 function fetchMedia(req, res, next) {
   db.all('SELECT * FROM media', (err, rows) => {
