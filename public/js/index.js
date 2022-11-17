@@ -9,6 +9,14 @@ function copyURI(evt) {
     });
 }
 
+function copyPath(evt) {
+  navigator.clipboard.writeText(absolutePath(evt)).then(() => {
+    console.log("copied");
+  }, () => {
+    console.log("failed");
+  });
+}
+
 function absolutePath (href) {
 	let link = document.createElement("a");
 	link.href = href;

@@ -49,11 +49,11 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                                 <% } else if (extension(file.path) == ".jpg" || extension(file.path) == ".jpeg" || extension(file.path) == ".png" || extension(file.path) == ".gif" || extension(file.path) == ".webp" ) { %>
                                 <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)">
 				<% } else {%> <!-- non-media file -->
-                        	<div class="nonmedia" onclick="copyURI(event)">
+				<div class="nonmedia" onclick="copyPath('<%=file.path%>')">
 					<p><%=extension(file.path)%> file</p>
 				</div>
 				<% } %>
-                                <label text-align:"center"><%= file.path %></label>
+                                <label><%= file.path %></label>
                                 <button class="destroy" form="delete-<%= file.path %>"></button>
                             </div>
                         </form>

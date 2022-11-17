@@ -86,3 +86,7 @@ div.nonmedia p {
 	line-height: 100px;
 	text-align: center;
 }
+
+label {
+  text-align: center;
+}
