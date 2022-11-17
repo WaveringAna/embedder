@@ -24,6 +24,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "busboy": "^1.6.0",
     "connect-sqlite3": "^0.9.13",
     "cookie-parser": "~1.4.4",
     "dotenv": "^8.6.0",
@@ -32,7 +33,6 @@
     "express-session": "^1.17.3",
     "http-errors": "~1.6.3",
     "mkdirp": "^1.0.4",
-    "multer": "^1.4.5-lts.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
     "sqlite3": "^5.0.2"

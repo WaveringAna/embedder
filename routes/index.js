@@ -1,37 +1,14 @@
 let express = require('express');
-let multer = require('multer');
+let Busboy = require('busboy');
 
 let db = require('../db');
 let fs = require('fs');
+let path = require('path');
 
 function extension(str){
   let file = str.split('/').pop();
   return [file.substr(0,file.lastIndexOf('.')),file.substr(file.lastIndexOf('.'),file.length)]
 }
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename : function(req, file, cb) {
-    db.all('SELECT * FROM media WHERE path = ?', [file.originalname], function (err, exists) {
-      if (exists.length != 0) {
-        let suffix = new Date().getTime() / 1000;
-        let nameAndExtension = extension(file.originalname);
-
-        if (req.body.title == '' || req.body.title  == null || req.body.title == undefined)
-          cb(null, nameAndExtension[0] + '-' + suffix + nameAndExtension[1])
-        else
-          cb(null, req.body.title + '-' + suffix + nameAndExtension[1])
-      } else {
-        if (req.body.title == '' || req.body.title  == null || req.body.title == undefined)
-          cb(null, file.originalname)
-        else
-          cb(null, req.body.title + nameAndExtension[1])
-      }
-    })
-  }
-});
 
 let allowedMimeTypes = [
   'image/png',
@@ -45,16 +22,6 @@ let allowedMimeTypes = [
   'audio/mpeg',
   'audio/ogg'
 ]
-
-const fileFilter = function(req, file, cb) {
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-}
-
-let upload = multer({ storage: storage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 
 function fetchMedia(req, res, next) {
   db.all('SELECT * FROM media', (err, rows) => {
@@ -76,27 +43,42 @@ function fetchMedia(req, res, next) {
 let router = express.Router();
 
 router.get('/', function (req, res, next) {
-    if (!req.user) { return res.render('home'); }
-    next();
+  if (!req.user) { return res.render('home'); }
+   next();
 }, fetchMedia, function(req, res, next) {
     res.locals.filter = null;
     res.render('index', { user: req.user });
 });
 
-router.post('/', upload.array('fileupload'), function(req, res, next) {
-  if (!req.files || Object.keys(req.files).length === 0) {
-    console.log(req)
-    return res.status(400).send('No files were uploaded.');
-  }
+router.post('/', function (req, res, next) {
+  const bb = Busboy({ headers: req.headers });
+  bb.on('file', function (name, file, info) {
+    let saveTo = path.join('uploads', info.filename);
+    if (fs.existsSync(saveTo)) {
+      let suffix = new Date().getTime() / 1000;
+      let nameAndExtension = extension(info.filename);
+	
+      saveTo = path.join('uploads', nameAndExtension[0] + '-' + suffix + nameAndExtension[1]);
+      console.log('File already exists, renaming to ' + nameAndExtension[0] + '-' + suffix + nameAndExtension[1]);
+      console.log('Saving to ' + saveTo);
 
-  for (file in req.files) {
-    db.run('INSERT INTO media (path) VALUES (?)', [req.files[file].filename], function (err) {
-    if (err) { console.log(err)
-      return next(err);
-    }
-      return res.redirect('/');
-    })
-  }
+      file.pipe(fs.createWriteStream(saveTo));
+      db.run('INSERT INTO media (path) VALUES (?)', [nameAndExtension[0] + '-' + suffix + nameAndExtension[1]], function (err) {
+        if (err) return next(err);
+      });
+     } else {
+        console.log('Saving to ' + saveTo);
+
+        file.pipe(fs.createWriteStream(saveTo));
+        db.run('INSERT INTO media (path) VALUES (?)', [info.filename], function (err) {
+          if (err) return next(err);
+        });
+      }
+    bb.on('close', function () {
+      res.redirect('/');
+    });
+  });
+  req.pipe(bb);
 });
 
 router.post('/:id(\\d+)/delete', function(req, res, next) {
