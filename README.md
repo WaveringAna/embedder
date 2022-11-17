@@ -8,7 +8,6 @@ Upcoming Features:
 * Smooth out mp4s similar to imgur and gfycat
 * Guest user accounts
 * ShareX support
-* Re-enable uploading of any file server side, client side for non media, just provide a copyable link
 * Expirey/auto-delete support
 
 
