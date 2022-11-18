@@ -73,6 +73,26 @@ function fetchMedia(req, res, next) {
   });
 }
 
+function checkAuth(req, res, next) {
+  let auth = process.env.EBAPI_KEY || process.env.EBPASS || 'pleaseSetAPI_KEY';
+  let key = null;
+
+  if (req.headers['key']) {
+    key = req.headers['key'];
+  } else {
+    return res.status(400).send('{success: false, message: "No key provided", fix: "Provide a key"}');
+  }
+
+  if (auth != key) {
+    return res.status(401).send('{success: false, message: "Invalid key", fix: "Provide a valid key"}');
+  }
+
+  shortKey = key.substr(0, 3) + '...'; 
+  console.log('Authenicated user with key: ' + shortKey);
+
+  next();
+}
+
 let router = express.Router();
 
 router.get('/', function (req, res, next) {
@@ -91,13 +111,32 @@ router.post('/', upload.array('fileupload'), function(req, res, next) {
 
   for (file in req.files) {
     db.run('INSERT INTO media (path) VALUES (?)', [req.files[file].filename], function (err) {
-    if (err) { console.log(err)
+    if (err) { 
+      console.log(err);
       return next(err);
     }
       return res.redirect('/');
     })
   }
 });
+
+router.post('/sharex', [checkAuth, upload.array('fileupload')], function(req, res, next) {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    console.log(req);
+    return res.status(400).send('No files were uploaded.');
+  }
+
+  for (file in req.files) {
+    db.run('INSERT INTO media (path) VALUES (?)', [req.files[file].filename], function (err) {
+    if (err) { 
+      console.log(err);
+      return next(err);
+    }
+      return res.send('Upload successful, path: /uploads/' + req.files[file].filename);
+    });
+  }
+});
+
 
 router.post('/:id(\\d+)/delete', function(req, res, next) {
   db.all('SELECT path FROM media WHERE id = ?', [ req.params.id ], function(err, path) {

@@ -17,7 +17,7 @@ Source:
 ```Bash
 EBPASS=changeme
 EBPORT=4000
-EBSECRET=4jkdmakl2l #jwt session secret
+EBAPI_KEY=changeme #ShareX support
 
 $ npm install
 $ node db.js
@@ -25,9 +25,34 @@ $ npm start
 ```
 Default username is admin with the password being whatever EBPASS is
 
-Docker
+ShareX support is enabled at "/upload", requires auth with key
+JSON
 ```
-docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=pass -e EBSECRET=4jkdmakl2l waveringana/embedder:latest
+{
+    "Version": "14.1.0",
+    "Name": "embedder",
+    "DestinationType": "ImageUploader, FileUploader",
+    "RequestMethod": "POST",
+    "RequestURL": "http://localhost:3000/sharex",
+    "Headers": {
+      "key": "changeme"
+    },
+    "Body": "MultipartFormData",
+    "Arguments": {
+      "fileupload": null
+    },
+    "FileFormName": "fileupload",
+    "URL": null,
+    "ThumbnailURL": null,
+    "DeletionURL": null,
+    "ErrorMessage": null
+  }
+]
+```
+
+Docker config
+```
+docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=changeme -e EBAPI_KEY=changeme waveringana/embedder:latest
 ```
 
 Docker Compose
@@ -40,7 +65,7 @@ services:
         environment:
             - EBPORT=4000
             - EBPASS=changeme
-            - EBSECRET=4jkdmakl2l
+            - EBAPI_KEY=changeme
         volumes:
             - embedderdb:/var/db
             - embedderuploads:/uploads
