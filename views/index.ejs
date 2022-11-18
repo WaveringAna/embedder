@@ -49,7 +49,13 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                         <form action="<%= file.url %>" method="post">
                             <div class="view">
                                 <% if (extension(file.path) == ".mp4" || extension(file.path) == ".mov" || extension(file.path) == "webp") { %>
-                                <video autoplay loop muted playsinline class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)"></video>
+                                <div class="video">
+                                  <video class="image" autoplay loop muted playsinline>
+                                    <source src="/uploads/<%= file.path %>">
+                                  </video>
+                                  <div class="overlay">
+                                    <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+                                  </div>
                                 <% } else if (extension(file.path) == ".jpg" || extension(file.path) == ".jpeg" || extension(file.path) == ".png" || extension(file.path) == ".gif" || extension(file.path) == ".webp" ) { %>
                                 <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)">
 				<% } else {%> <!-- non-media file -->

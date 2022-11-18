@@ -9,6 +9,15 @@ function copyURI(evt) {
     });
 }
 
+function copyA(evt) {
+  evt.preventDefault();
+  navigator.clipboard.writeText(absolutePath(evt.target.getAttribute('href'))).then(() => {
+    console.log("copied");
+  }, () => {
+    console.log("failed");
+  });
+}
+
 function copyPath(evt) {
   navigator.clipboard.writeText(absolutePath(evt)).then(() => {
     console.log("copied");

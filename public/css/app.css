@@ -90,3 +90,27 @@ div.nonmedia p {
 label {
   text-align: center;
 }
+
+.video {
+  position: relative;
+}
+
+.video .overlay {
+  position: absolute;
+  top: 0%;
+  left: 70%;
+  transform: translateY(0%) translateX(70%);
+  z-index: 1;
+  border-radius: 25px;
+  border: 2px solid #73AD21;
+  padding: 5px;
+  background-color: #eee;
+}
+
+.video .overlay a {
+  color: #73AD21;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: center;
+}

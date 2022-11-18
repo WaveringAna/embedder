@@ -103,6 +103,11 @@ router.get('/', function (req, res, next) {
     res.render('index', { user: req.user });
 });
 
+router.get('/gifv/:file', function (req, res, next) {
+  let url = req.protocol + '://' + req.get('host') + '/uploads/' + req.params.file;
+  return res.render('gifv', { url: url });
+});
+
 router.post('/', upload.array('fileupload'), function(req, res, next) {
   if (!req.files || Object.keys(req.files).length === 0) {
     console.log(req)
@@ -137,7 +142,6 @@ router.post('/sharex', [checkAuth, upload.array('fileupload')], function(req, re
     });
   }
 });
-
 
 router.post('/:id(\\d+)/delete', function(req, res, next) {
   db.all('SELECT path FROM media WHERE id = ?', [ req.params.id ], function(err, path) {
