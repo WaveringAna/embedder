@@ -46,8 +46,7 @@ JSON
     "ThumbnailURL": null,
     "DeletionURL": null,
     "ErrorMessage": null
-  }
-]
+}
 ```
 
 Docker config
