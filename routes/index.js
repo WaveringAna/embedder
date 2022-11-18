@@ -132,7 +132,8 @@ router.post('/sharex', [checkAuth, upload.array('fileupload')], function(req, re
       console.log(err);
       return next(err);
     }
-      return res.send('Upload successful, path: /uploads/' + req.files[file].filename);
+      console.log(req.protocol + '://' + req.get('host') + '/uploads/' + req.files[file].filename);
+      return res.send(req.protocol + '://' + req.get('host') + '/uploads/' + req.files[file].filename);
     });
   }
 });
