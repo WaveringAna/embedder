@@ -14,8 +14,8 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename : function(req, file, cb) {
-    db.all('SELECT * FROM media WHERE path = ?', [file.originalname], function (err, exists) {
-      let nameAndExtension = extension(file.originalname);
+    let nameAndExtension = extension(file.originalname);
+    db.all('SELECT * FROM media WHERE path = ?', [nameAndExtension[0] + nameAndExtension[1]], function (err, exists) {
       if (exists.length != 0) {
         let suffix = new Date().getTime() / 1000;
 
