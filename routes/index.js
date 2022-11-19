@@ -121,7 +121,7 @@ function convert(req, res, next) {
         .run();
     } else if (nameAndExtension[1] == '.gif') {
       console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to mp4');
-      ffmpeg(req.files[file].originalname)
+      ffmpeg('uploads/' + req.files[file].originalname)
         .inputFormat('gif')
         .outputFormat('mp4')
         .outputOptions([
