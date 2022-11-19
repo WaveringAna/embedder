@@ -105,6 +105,22 @@ function checkAuth(req, res, next) {
 function convert(req, res, next) {
   for (file in req.files) {
     let nameAndExtension = extension(req.files[file].originalname);
+    let oembed = {
+      type: "video",
+      version: "1.0",
+      provider_name: "embedder",
+      provider_url: "https://github.com/WaveringAna/embedder",
+      cache_age: 86400,
+      html: "<iframe src='" + req.protocol + "://" + req.get('host') + "/gifv/" + req.files[file].filename + "'></iframe>",
+      width: 640,
+      height: 360
+    };
+
+    fs.writeFile('uploads/oembed-' + req.files[file].filename + '.json', JSON.stringify(oembed), function (err) {
+      if (err) return next(err);
+      console.log('oembed file created ' + req.files[file].filename + '.json');
+    });
+
     if (nameAndExtension[1] == '.mp4') {
       console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to gif');
       console.log(nameAndExtension[0] + nameAndExtension[1]);
