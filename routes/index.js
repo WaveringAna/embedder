@@ -116,9 +116,9 @@ function convert(req, res, next) {
       height: 360
     };
 
-    fs.writeFile('uploads/oembed-' + req.files[file].filename + '.json', JSON.stringify(oembed), function (err) {
+    fs.writeFile('uploads/oembed-' + nameAndExtension[0] + '.json', JSON.stringify(oembed), function (err) {
       if (err) return next(err);
-      console.log('oembed file created ' + req.files[file].filename + '.json');
+      console.log('oembed file created ' + nameAndExtension[0] + '.json');
     });
 
     if (nameAndExtension[1] == '.mp4') {
