@@ -39,5 +39,8 @@
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
     "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.28.0"
   }
 }
