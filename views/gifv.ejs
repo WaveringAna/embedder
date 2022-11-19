@@ -1,18 +1,28 @@
+<%
+function extension(str){
+  let file = str.split('/').pop();
+  return [file.substr(0,file.lastIndexOf('.')),file.substr(file.lastIndexOf('.'),file.length).toLowerCase()]
+}
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
-  <meta property="og:type" content="video.other">
-  <meta property="twitter:card" content="player">
-  <meta property="twitter:player" content="<%= url %>">
-  <meta property="twitter:player:stream" content="<%= url %>">
-  <meta property="twitter:player:stream:content_type" content="text/mp4">
-  <meta property="og:video" content="<%= url %>">
-  <meta property="og:video:type" content="text/mp4">
+  <meta property="og:type" content="video.other"></meta>
+  <meta property="og:image" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
+  <meta property="og:image:secure_url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
+  <meta property="twitter:card" content="player"></meta>
+  <meta property="twitter:player" content="<%= url %>"></meta>
+  <meta property="twitter:player:stream" content="<%= url %>"></meta>
+  <meta property="twitter:player:stream:content_type" content="text/mp4"></meta>
+  <meta property="og:video" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:video:secure_url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:video:type" content="text/mp4"></meta>
   <!--<meta property="og:video:width" content="<%# width %>">
   <meta property="og:video:height" content="<%# height %>">
   <meta name="twitter:image" content="<%# thumbnail %>">-->
 </head>
 <body>
-  <video autoplay loop muted playsinline class="image" width="100%"><source src="<%= url %>"></video>
+  <video autoplay loop muted playsinline class="image" width="100%"><source src="/uploads/<%= extension(url)[0] %>.mp4"></video>
 </body>
 </html>

@@ -1,5 +1,8 @@
 let express = require('express');
 let multer = require('multer');
+let ffmpegpath = require('@ffmpeg-installer/ffmpeg').path;
+let ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegpath);
 
 let db = require('../db');
 let fs = require('fs');
@@ -14,6 +17,7 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename : function(req, file, cb) {
+    console.log(file)
     let nameAndExtension = extension(file.originalname);
     db.all('SELECT * FROM media WHERE path = ?', [nameAndExtension[0] + nameAndExtension[1]], function (err, exists) {
       if (exists.length != 0) {
@@ -73,6 +77,9 @@ function fetchMedia(req, res, next) {
   });
 }
 
+
+//middleware
+//Checks ShareX key
 function checkAuth(req, res, next) {
   let auth = process.env.EBAPI_KEY || process.env.EBPASS || 'pleaseSetAPI_KEY';
   let key = null;
@@ -93,6 +100,48 @@ function checkAuth(req, res, next) {
   next();
 }
 
+//Converts mp4 to gif and vice versa with ffmpeg
+function convert(req, res, next) {
+  for (file in req.files) {
+    let nameAndExtension = extension(req.files[file].path);
+    if (nameAndExtension[1] == '.mp4') {
+      console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to gif');
+      console.log(req.files[file].path);
+      ffmpeg()
+        .input(req.files[file].path)
+        .inputFormat('mp4')
+        .outputFormat('gif')
+        .output(nameAndExtension[0] + '.gif')
+        .on('end', function() {
+          console.log('Conversion complete');
+          console.log('Uploaded to uploads/' + nameAndExtension[0] + '.gif');
+        })
+        .on('error', (e) => console.log(e))
+        .run();
+    } else if (nameAndExtension[1] == '.gif') {
+      console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to mp4');
+      ffmpeg(req.files[file].path)
+        .inputFormat('gif')
+        .outputFormat('mp4')
+        .outputOptions([
+          '-pix_fmt yuv420p',
+          '-c:v libx264',
+          '-movflags +faststart',
+          "filter:v crop='floor(in_w/2)*2:floor(in_h/2)*2'"
+        ])
+        .noAudio()
+        .output(nameAndExtension[0] + '.mp4')
+        .on('end', function() {
+          console.log('Conversion complete');
+          console.log('Uploaded to uploads/' + nameAndExtension[0] + '.mp4');
+        })
+        .run();
+    }
+  }
+
+  next();
+};
+
 let router = express.Router();
 
 router.get('/', function (req, res, next) {
@@ -105,10 +154,10 @@ router.get('/', function (req, res, next) {
 
 router.get('/gifv/:file', function (req, res, next) {
   let url = req.protocol + '://' + req.get('host') + '/uploads/' + req.params.file;
-  return res.render('gifv', { url: url });
+  return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host') });
 });
 
-router.post('/', upload.array('fileupload'), function(req, res, next) {
+router.post('/', [upload.array('fileupload'), convert], function(req, res, next) {
   if (!req.files || Object.keys(req.files).length === 0) {
     console.log(req)
     return res.status(400).send('No files were uploaded.');

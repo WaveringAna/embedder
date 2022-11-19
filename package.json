@@ -24,12 +24,14 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "connect-sqlite3": "^0.9.13",
     "cookie-parser": "~1.4.4",
     "dotenv": "^8.6.0",
     "ejs": "^3.1.8",
     "express": "~4.16.1",
     "express-session": "^1.17.3",
+    "fluent-ffmpeg": "^2.1.2",
     "http-errors": "~1.6.3",
     "mkdirp": "^1.0.4",
     "multer": "^1.4.5-lts.1",
