@@ -19,7 +19,6 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename : function(req, file, cb) {
-    console.log(file)
     let nameAndExtension = extension(file.originalname);
     db.all('SELECT * FROM media WHERE path = ?', [nameAndExtension[0] + nameAndExtension[1]], function (err, exists) {
       if (exists.length != 0) {
@@ -105,15 +104,15 @@ function checkAuth(req, res, next) {
 //Converts mp4 to gif and vice versa with ffmpeg
 function convert(req, res, next) {
   for (file in req.files) {
-    let nameAndExtension = extension(req.files[file].path);
+    let nameAndExtension = extension(req.files[file].originalname);
     if (nameAndExtension[1] == '.mp4') {
       console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to gif');
-      console.log(req.files[file].path);
+      console.log(nameAndExtension[0] + nameAndExtension[1]);
       ffmpeg()
-        .input(req.files[file].path)
+        .input('uploads/' + req.files[file].originalname)
         .inputFormat('mp4')
         .outputFormat('gif')
-        .output(nameAndExtension[0] + '.gif')
+        .output('uploads/' + nameAndExtension[0] + '.gif')
         .on('end', function() {
           console.log('Conversion complete');
           console.log('Uploaded to uploads/' + nameAndExtension[0] + '.gif');
@@ -122,7 +121,7 @@ function convert(req, res, next) {
         .run();
     } else if (nameAndExtension[1] == '.gif') {
       console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to mp4');
-      ffmpeg(req.files[file].path)
+      ffmpeg(req.files[file].originalname)
         .inputFormat('gif')
         .outputFormat('mp4')
         .outputOptions([
@@ -131,7 +130,7 @@ function convert(req, res, next) {
           '-movflags +faststart'
         ])
         .noAudio()
-        .output(nameAndExtension[0] + '.mp4')
+        .output('uploads/' + nameAndExtension[0] + '.mp4')
         .on('end', function() {
           console.log('Conversion complete');
           console.log('Uploaded to uploads/' + nameAndExtension[0] + '.mp4');
