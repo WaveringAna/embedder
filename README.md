@@ -25,7 +25,7 @@ $ npm start
 ```
 Default username is admin with the password being whatever EBPASS is
 
-ShareX support is enabled at "/upload", requires auth with key
+ShareX support is enabled at "/upload", requires auth with key, expire key is in days 
 JSON
 ```
 {
@@ -39,7 +39,8 @@ JSON
     },
     "Body": "MultipartFormData",
     "Arguments": {
-      "fileupload": null
+      "fileupload": null,
+      "expire": null
     },
     "FileFormName": "fileupload",
     "URL": null,
