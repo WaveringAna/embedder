@@ -1,5 +1,10 @@
 let express = require('express');
 let multer = require('multer');
+let ffmpegpath = require('@ffmpeg-installer/ffmpeg').path;
+let ffprobepath = require('@ffprobe-installer/ffprobe').path;
+let ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegpath);
+ffmpeg.setFfprobePath(ffprobepath);
 
 let db = require('../db');
 let fs = require('fs');
@@ -73,6 +78,9 @@ function fetchMedia(req, res, next) {
   });
 }
 
+
+//middleware
+//Checks ShareX key
 function checkAuth(req, res, next) {
   let auth = process.env.EBAPI_KEY || process.env.EBPASS || 'pleaseSetAPI_KEY';
   let key = null;
@@ -93,6 +101,63 @@ function checkAuth(req, res, next) {
   next();
 }
 
+//Converts mp4 to gif and vice versa with ffmpeg
+function convert(req, res, next) {
+  for (file in req.files) {
+    let nameAndExtension = extension(req.files[file].originalname);
+    let oembed = {
+      type: "video",
+      version: "1.0",
+      provider_name: "embedder",
+      provider_url: "https://github.com/WaveringAna/embedder",
+      cache_age: 86400,
+      html: "<iframe src='" + req.protocol + "://" + req.get('host') + "/gifv/" + nameAndExtension[0] + "'></iframe>",
+      width: 640,
+      height: 360
+    };
+
+    fs.writeFile('uploads/oembed-' + nameAndExtension[0] + '.json', JSON.stringify(oembed), function (err) {
+      if (err) return next(err);
+      console.log('oembed file created ' + nameAndExtension[0] + '.json');
+    });
+
+    if (nameAndExtension[1] == '.mp4') {
+      console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to gif');
+      console.log(nameAndExtension[0] + nameAndExtension[1]);
+      ffmpeg()
+        .input('uploads/' + req.files[file].originalname)
+        .inputFormat('mp4')
+        .outputFormat('gif')
+        .output('uploads/' + nameAndExtension[0] + '.gif')
+        .on('end', function() {
+          console.log('Conversion complete');
+          console.log('Uploaded to uploads/' + nameAndExtension[0] + '.gif');
+        })
+        .on('error', (e) => console.log(e))
+        .run();
+    } else if (nameAndExtension[1] == '.gif') {
+      console.log('Converting ' + nameAndExtension[0] + nameAndExtension[1] + ' to mp4');
+      ffmpeg('uploads/' + req.files[file].originalname)
+        .inputFormat('gif')
+        .outputFormat('mp4')
+        .outputOptions([
+          '-pix_fmt yuv420p',
+          '-c:v libx264',
+          '-movflags +faststart'
+        ])
+        .noAudio()
+        .output('uploads/' + nameAndExtension[0] + '.mp4')
+        .on('end', function() {
+          console.log('Conversion complete');
+          console.log('Uploaded to uploads/' + nameAndExtension[0] + '.mp4');
+        })
+        .run();
+    }
+  }
+
+  next();
+};
+
 let router = express.Router();
 
 router.get('/', function (req, res, next) {
@@ -103,7 +168,37 @@ router.get('/', function (req, res, next) {
     res.render('index', { user: req.user });
 });
 
-router.post('/', upload.array('fileupload'), function(req, res, next) {
+router.get('/gifv/:file', function (req, res, next) {
+  let url = req.protocol + '://' + req.get('host') + '/uploads/' + req.params.file;
+  let width; let height;
+
+  nameAndExtension = extension('uploads/' + req.params.file);
+  if (nameAndExtension[1] == '.mp4') {
+    ffmpeg()
+      .input('uploads/' + req.params.file)
+      .inputFormat('mp4')
+      .ffprobe(function(err, data) {
+        if (err) return next(err);
+          width = data.streams[0].width;
+          height = data.streams[0].height;
+          console.log(width + 'x' + height);
+          return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host'), width: width, height: height });
+      }); 
+  } else if (nameAndExtension[1] == '.gif') {
+    ffmpeg()
+      .input('uploads/' + req.params.file)
+      .inputFormat('gif')
+      .ffprobe(function(err, data) {
+        if (err) return next(err);
+          width = data.streams[0].width;
+          height = data.streams[0].height;
+          console.log(width + 'x' + height);
+          return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host'), width: width, height: height });
+      });
+  } 
+});
+
+router.post('/', [upload.array('fileupload'), convert], function(req, res, next) {
   if (!req.files || Object.keys(req.files).length === 0) {
     console.log(req)
     return res.status(400).send('No files were uploaded.');
@@ -137,7 +232,6 @@ router.post('/sharex', [checkAuth, upload.array('fileupload')], function(req, re
     });
   }
 });
-
 
 router.post('/:id(\\d+)/delete', function(req, res, next) {
   db.all('SELECT path FROM media WHERE id = ?', [ req.params.id ], function(err, path) {

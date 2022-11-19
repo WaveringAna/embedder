@@ -1,0 +1,36 @@
+<%
+function extension(str){
+  let file = str.split('/').pop();
+  return [file.substr(0,file.lastIndexOf('.')),file.substr(file.lastIndexOf('.'),file.length).toLowerCase()]
+}
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="twitter:image" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif">
+  <meta name="twitter:card" content="player"></meta>
+  <meta name="twitter:player" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4">
+  <meta name="twitter:player:width" content="<%= width %>"></meta>
+  <meta name="twitter:player:height" content="<%= height %>"></meta>
+  <meta name="twitter:player:stream" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4">
+  <meta name="twitter:player:stream:content_type" content="text/mp4"></meta>
+  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0] %>.json"></link>
+  <meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
+  <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
+  <meta property="og:description" content="Click to view the GIF"></meta>
+  <meta property="og:type" content="video.other"></meta>
+  <meta property="og:image" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
+  <meta property="og:image:type" content="image/gif"></meta>
+  <meta property="og:image:width" content="<%= width %>"></meta>
+  <meta property="og:image:height" content="<%= height %>"></meta>
+  <meta property="og:video" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:video:secure_url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:video:type" content="text/mp4"></meta>
+  <meta property="og:video:width" content="<%= width %>"></meta>
+  <meta property="og:video:height" content="<%= height %>"></meta>
+</head>
+<body>
+  <video autoplay loop muted playsinline class="image" width="100%"><source src="/uploads/<%= extension(url)[0] %>.mp4"></video>
+</body>
+</html>
