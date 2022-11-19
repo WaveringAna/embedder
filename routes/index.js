@@ -111,7 +111,7 @@ function convert(req, res, next) {
       provider_name: "embedder",
       provider_url: "https://github.com/WaveringAna/embedder",
       cache_age: 86400,
-      html: "<iframe src='" + req.protocol + "://" + req.get('host') + "/gifv/" + req.files[file].filename + "'></iframe>",
+      html: "<iframe src='" + req.protocol + "://" + req.get('host') + "/gifv/" + nameAndExtension[0] + "'></iframe>",
       width: 640,
       height: 360
     };
