@@ -16,7 +16,7 @@ function extension(str){
   <meta name="twitter:player:stream" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4">
   <meta name="twitter:player:stream:content_type" content="text/mp4"></meta>
   <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0] %>.json"></link>
-  <meta property="og:title" content="embedder"></meta>
+  <meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
   <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
   <meta property="og:description" content="Click to view the GIF"></meta>
   <meta property="og:type" content="video.other"></meta>
