@@ -9,24 +9,23 @@ function extension(str){
 <html>
 <head>
   <meta property="og:type" content="video.other"></meta>
+  <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
   <meta property="og:image" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
-  <meta property="og:image:width" content="<%= width %>"></meta>
-  <meta property="og:image:height" content="<%= height %>"></meta>
+  <meta property="og:image:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
   <meta property="og:image:type" content="image/gif"></meta>
   <meta property="og:image:secure_url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
-  <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:image:width" content="<%= width %>"></meta>
+  <meta property="og:image:height" content="<%= height %>"></meta>
   <meta property="twitter:card" content="player"></meta>
-  <meta property="twitter:player" content="<%= url %>"></meta>
   <meta property="twitter:player:width" content="<%= width %>"></meta>
   <meta property="twitter:player:height" content="<%= height %>"></meta>
-  <meta property="twitter:player:stream" content="<%= url %>"></meta>
-  <meta property="twitter:player:stream:content_type" content="text/mp4"></meta>
+  <meta property="twitter:player" content="<%= url %>"></meta>
   <meta property="og:video" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
-  <meta property="og:video:width" content="<%= width %>"></meta>
-  <meta property="og:video:height" content="<%= height %>"></meta>
   <meta property="og:video:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
   <meta property="og:video:secure_url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
   <meta property="og:video:type" content="text/mp4"></meta>
+  <meta property="og:video:width" content="<%= width %>"></meta>
+  <meta property="og:video:height" content="<%= height %>"></meta>
 </head>
 <body>
   <video autoplay loop muted playsinline class="image" width="100%"><source src="/uploads/<%= extension(url)[0] %>.mp4"></video>
