@@ -56,13 +56,21 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                                   <div class="overlay">
                                     <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
                                   </div>
+                                  </div>
+                                  <% } else if (extension(file.path) == ".gif") { %>
+                                  <div class="video">
+                                  <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)">
+                                  <div class="overlay">
+                                    <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+                                  </div>
+                                  </div>
                                 <% } else if (extension(file.path) == ".jpg" || extension(file.path) == ".jpeg" || extension(file.path) == ".png" || extension(file.path) == ".gif" || extension(file.path) == ".webp" ) { %>
                                 <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)">
-				<% } else {%> <!-- non-media file -->
-				<div class="nonmedia" onclick="copyPath('<%=file.path%>')">
-					<p><%=extension(file.path)%> file</p>
-				</div>
-				<% } %>
+                                <% } else {%> <!-- non-media file -->
+                                <div class="nonmedia" onclick="copyPath('<%=file.path%>')">
+                                    <p><%=extension(file.path)%> file</p>
+                                </div>
+                                <% } %>
                                 <label><%= file.path %></label>
                                 <button class="destroy" form="delete-<%= file.path %>"></button>
                             </div>
