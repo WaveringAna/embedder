@@ -13,6 +13,7 @@ let indexRouter = require('./routes/index');
 let authRouter = require('./routes/auth');
 
 let app = express();
+app.enable('trust proxy');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

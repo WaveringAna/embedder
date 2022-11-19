@@ -1,8 +1,10 @@
 let express = require('express');
 let multer = require('multer');
 let ffmpegpath = require('@ffmpeg-installer/ffmpeg').path;
+let ffprobepath = require('@ffprobe-installer/ffprobe').path;
 let ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegpath);
+ffmpeg.setFfprobePath(ffprobepath);
 
 let db = require('../db');
 let fs = require('fs');
@@ -126,8 +128,7 @@ function convert(req, res, next) {
         .outputOptions([
           '-pix_fmt yuv420p',
           '-c:v libx264',
-          '-movflags +faststart',
-          "filter:v crop='floor(in_w/2)*2:floor(in_h/2)*2'"
+          '-movflags +faststart'
         ])
         .noAudio()
         .output(nameAndExtension[0] + '.mp4')
@@ -154,7 +155,32 @@ router.get('/', function (req, res, next) {
 
 router.get('/gifv/:file', function (req, res, next) {
   let url = req.protocol + '://' + req.get('host') + '/uploads/' + req.params.file;
-  return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host') });
+  let width; let height;
+
+  nameAndExtension = extension('uploads/' + req.params.file);
+  if (nameAndExtension[1] == '.mp4') {
+    ffmpeg()
+      .input('uploads/' + req.params.file)
+      .inputFormat('mp4')
+      .ffprobe(function(err, data) {
+        if (err) return next(err);
+          width = data.streams[0].width;
+          height = data.streams[0].height;
+          console.log(width + 'x' + height);
+          return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host'), width: width, height: height });
+      }); 
+  } else if (nameAndExtension[1] == '.gif') {
+    ffmpeg()
+      .input('uploads/' + req.params.file)
+      .inputFormat('gif')
+      .ffprobe(function(err, data) {
+        if (err) return next(err);
+          width = data.streams[0].width;
+          height = data.streams[0].height;
+          console.log(width + 'x' + height);
+          return res.render('gifv', { url: url, host: req.protocol + '://' + req.get('host'), width: width, height: height });
+      });
+  } 
 });
 
 router.post('/', [upload.array('fileupload'), convert], function(req, res, next) {
