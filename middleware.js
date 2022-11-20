@@ -50,28 +50,28 @@ function convert(req, res, next) {
 			height: 360
 		};
   
-		fs.writeFile(`uploads/oembed-${nameAndExtension[0]}.json`, JSON.stringify(oembed), function (err) {
+		fs.writeFile(`uploads/oembed-${nameAndExtension[0]}${nameAndExtension[1]}.json`, JSON.stringify(oembed), function (err) {
 			if (err) return next(err);
-			console.log("oembed file created " + nameAndExtension[0] + ".json");
+			console.log(`oembed file created ${nameAndExtension[0]}${nameAndExtension[1]}.json`);
 		});
   
 		if (nameAndExtension[1] == ".mp4") {
 			console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
 			console.log(nameAndExtension[0] + nameAndExtension[1]);
 			ffmpeg()
-				.input("uploads/" + req.files[file].originalname)
+				.input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
 				.inputFormat("mp4")
 				.outputFormat("gif")
-				.output("uploads/" + nameAndExtension[0] + ".gif")
+				.output(`uploads/${nameAndExtension[0]}.gif`)
 				.on("end", function() {
 					console.log("Conversion complete");
-					console.log("Uploaded to uploads/" + nameAndExtension[0] + ".gif");
+					console.log(`Uploaded to uploads/${nameAndExtension[0]}.gif`);
 				})
 				.on("error", (e) => console.log(e))
 				.run();
 		} else if (nameAndExtension[1] == ".gif") {
 			console.log(`Converting ${nameAndExtension[0]}${nameAndExtension[1]} to mp4`);
-			ffmpeg("uploads/" + req.files[file].originalname)
+			ffmpeg(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
 				.inputFormat("gif")
 				.outputFormat("mp4")
 				.outputOptions([

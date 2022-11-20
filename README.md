@@ -5,10 +5,7 @@ A media host specialized in good looking embeds for services like Discord. No fi
 <img src="readmegif.gif">
 
 Upcoming Features: 
-* Smooth out mp4s similar to imgur and gfycat
 * Guest user accounts
-* ShareX support
-* Expirey/auto-delete support
 
 
 ## Run

@@ -4,7 +4,6 @@ require("dotenv").config();
 let express = require("express");
 let passport = require("passport");
 let session = require("express-session");
-let createError = require("http-errors");
 let cookieParser = require("cookie-parser");
 let SQLiteStore = require("connect-sqlite3")(session);
 
@@ -47,21 +46,10 @@ app.use("/", authRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-	next(createError(404));
-});
-
 // error handler
-app.use(function(err, req, res) {
-	// set locals, only providing error in development
-	console.log(err);
-	res.locals.message = err.message;
-	res.locals.error = req.app.get("env") === "development" ? err : {};
-
-	// render the error page
-	res.status(err.status || 500);
-	res.render("error");
+app.use((err, req, res) => {
+	console.error(err.stack);
+	res.status(500).send("Something broke!");
 });
 
 function prune () {
@@ -72,17 +60,17 @@ function prune () {
 		console.log("Expired rows: " + rows);
 		if (err) return console.error(err);
 		rows.forEach((row) => {
-			console.log("Deleting " + row.path);
-			fs.unlink("uploads/" + row.path, (err) => {
+			console.log(`Deleting ${row.path}`);
+			fs.unlink(`uploads/${row.path}`, (err) => {
 				if (err) {
 					if(err.errno == -4058) return; //file doesn't exist
 					return console.error(err);
 				}
-				console.log("Deleted " + row.path);
+				console.log(`Deleted ${row.path}`);
 			});
 			db.run("DELETE FROM media WHERE expire > ?", [Date.now()], (err) => {
 				if (err) return console.error(err);
-				console.log("Deleted " + row.path + " from database");
+				console.log(`Deleted ${row.path} from database`);
 			});
 		});
 	});

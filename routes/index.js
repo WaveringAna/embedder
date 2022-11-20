@@ -1,6 +1,7 @@
 let multer = require("multer");
 let express = require("express");
 let ffmpeg = require("fluent-ffmpeg");
+let imageProbe = require("probe-image-size");
 let ffmpegpath = require("@ffmpeg-installer/ffmpeg").path;
 let ffprobepath = require("@ffprobe-installer/ffprobe").path;
 
@@ -91,8 +92,8 @@ router.get("/", function (req, res, next) {
 	res.render("index", { user: req.user });
 });
 
-router.get("/gifv/:file", function (req, res, next) {
-	let url = req.protocol + "://" + req.get("host") + "/uploads/" + req.params.file;
+router.get("/gifv/:file", async function (req, res, next) {
+	let url = `${req.protocol}://${req.get("host")}/uploads/${req.params.file}`;
 	let width; let height;
 
 	let nameAndExtension = extension("uploads/" + req.params.file);
@@ -104,8 +105,7 @@ router.get("/gifv/:file", function (req, res, next) {
 				if (err) return next(err);
 				width = data.streams[0].width;
 				height = data.streams[0].height;
-				console.log(width + "x" + height);
-				return res.render("gifv", { url: url, host: req.protocol + "://" + req.get("host"), width: width, height: height });
+				return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
 			}); 
 	} else if (nameAndExtension[1] == ".gif") {
 		ffmpeg()
@@ -115,9 +115,11 @@ router.get("/gifv/:file", function (req, res, next) {
 				if (err) return next(err);
 				width = data.streams[0].width;
 				height = data.streams[0].height;
-				console.log(width + "x" + height);
-				return res.render("gifv", { url: url, host: req.protocol + "://" + req.get("host"), width: width, height: height });
+				return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
 			});
+	} else {
+		let imageData = await imageProbe(fs.createReadStream("uploads/" + req.params.file));
+		return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: imageData.width, height: imageData.height });
 	} 
 });
 
@@ -132,7 +134,7 @@ router.post("/sharex", [checkAuth, upload.array("fileupload"), convert, handleUp
 router.post("/:id(\\d+)/delete", function(req, res, next) {
 	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], function(err, path) {
 		if (err) { return next(err); }
-		fs.unlink("uploads/" + path[0].path, (err => {
+		fs.unlink(`uploads/${path[0].path}`, (err => {
 			if (err) {
 				console.log(err);
 				if (err.errno == -4058) { //File just doesnt exist anymore
@@ -146,8 +148,7 @@ router.post("/:id(\\d+)/delete", function(req, res, next) {
 					console.log(err);
 					return res.redirect("/");
 				}
-			}
-			else {
+			} else {
 				console.log(`Deleted ${path}`);
 				//Callback Hell :D
 				db.run("DELETE FROM media WHERE id = ?", [
