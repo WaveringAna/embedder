@@ -101,7 +101,6 @@ function handleUpload(req, res, next) {
 	for (let file in req.files) {
 		let currentdate = Date.now();
 		let expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
-		console.log(expireDate);
 		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [req.files[file].filename, expireDate], function (err) {
 			if (err) { 
 				console.log(err);

@@ -47,6 +47,11 @@ app.use("/", authRouter);
 app.use("/uploads", express.static("uploads"));
 
 function prune () {
+	db.all("SELECT * FROM media", (err, rows) => {
+		console.log("Uploaded files: " + rows.length);
+		console.log(rows)
+	});
+
 	console.log("Vacuuming database...");
 	db.run("VACUUM");
 
@@ -70,13 +75,12 @@ function prune () {
 						if (err) return console.error(err);
 					});
 				}
-				
 			});
 			console.log(`Deleted ${row.path}`);
 		});
 	});
 }
 
-setInterval(prune, 1000 * 60 * 30); //prune every 30 minutes
+setInterval(prune, 1000 * 60); //prune every minute
 
 module.exports = app;
