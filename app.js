@@ -46,12 +46,6 @@ app.use("/", authRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-// error handler
-app.use((err, req, res) => {
-	console.error(err.stack);
-	res.status(500).send("Something broke!");
-});
-
 function prune () {
 	console.log("Vacuuming database...");
 	db.run("VACUUM");
