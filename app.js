@@ -63,15 +63,22 @@ function prune () {
 			console.log(`Deleting ${row.path}`);
 			fs.unlink(`uploads/${row.path}`, (err) => {
 				if (err) {
-					if(err.errno == -4058) return; //file doesn't exist
-					return console.error(err);
+					if(err.errno == -4058) {
+						console.log("File already deleted");
+						db.all("DELETE FROM media WHERE path = ?", [row.path], (err) => {
+							if (err) return console.error(err);
+						});
+					} else {
+						console.error(err);
+					}
+				} else {
+					db.all("DELETE FROM media WHERE path = ?", [row.path], (err) => {
+						if (err) return console.error(err);
+					});
 				}
-				console.log(`Deleted ${row.path}`);
+				
 			});
-			db.run("DELETE FROM media WHERE expire > ?", [Date.now()], (err) => {
-				if (err) return console.error(err);
-				console.log(`Deleted ${row.path} from database`);
-			});
+			console.log(`Deleted ${row.path}`);
 		});
 	});
 }
