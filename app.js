@@ -56,7 +56,7 @@ function prune () {
 	console.log("Vacuuming database...");
 	db.run("VACUUM");
 
-	db.all("SELECT * FROM media WHERE expire > ?", [Date.now()], (err, rows) => {
+	db.all("SELECT * FROM media WHERE expire < ?", [Date.now()], (err, rows) => {
 		console.log("Expired rows: " + rows);
 		if (err) return console.error(err);
 		rows.forEach((row) => {
