@@ -49,7 +49,7 @@ app.use("/uploads", express.static("uploads"));
 function prune () {
 	db.all("SELECT * FROM media", (err, rows) => {
 		console.log("Uploaded files: " + rows.length);
-		console.log(rows)
+		console.log(rows);
 	});
 
 	console.log("Vacuuming database...");

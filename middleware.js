@@ -114,7 +114,7 @@ function handleUpload(req, res, next) {
 			}
 			console.log(`Uploaded ${req.files[file].filename} to database`);
 			if (expireDate != null || expireDate != undefined || expireDate != "")
-				console.log(`It will expire in ${req.body.expire} days`);
+				console.log(`It will expire in ${expireDate} days`);
 			else
 				console.log("It will not expire");
 		});
