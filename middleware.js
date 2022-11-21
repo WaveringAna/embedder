@@ -100,14 +100,23 @@ function handleUpload(req, res, next) {
   
 	for (let file in req.files) {
 		let currentdate = Date.now();
-		let expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
+		let expireDate= "";
+		if (req.body.expire) {
+			expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
+			console.log(req.body.expire);
+			console.log(expireDate);
+		} else
+			expireDate = null;
 		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [req.files[file].filename, expireDate], function (err) {
 			if (err) { 
 				console.log(err);
 				return next(err);
 			}
-			console.log("Uploaded " + req.files[file].filename + " to database");
-			console.log("It will expire in " + req.body.expire + " days");
+			console.log(`Uploaded ${req.files[file].filename} to database`);
+			if (expireDate != null || expireDate != undefined || expireDate != "")
+				console.log(`It will expire in ${req.body.expire} days`);
+			else
+				console.log("It will not expire");
 		});
 	}
 
