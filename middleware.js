@@ -55,7 +55,7 @@ function convert(req, res, next) {
 			console.log(`oembed file created ${nameAndExtension[0]}${nameAndExtension[1]}.json`);
 		});
   
-		if (nameAndExtension[1] == ".mp4") {
+		/**if (nameAndExtension[1] == ".mp4") {
 			console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
 			console.log(nameAndExtension[0] + nameAndExtension[1]);
 			ffmpeg()
@@ -86,7 +86,7 @@ function convert(req, res, next) {
 					console.log(`Uploaded to uploads/${nameAndExtension[0]}.mp4`);
 				})
 				.run();
-		}
+		}**/
 	}
   
 	next();

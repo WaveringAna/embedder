@@ -8,7 +8,7 @@ function extension(str){
 <!DOCTYPE html>
 <html>
 <head>
-  <% if (extension(url)[1] == ".mp4" || extension(url)[1] == ".gif") { %>
+  <% if (extension(url)[1] == ".gif") { %>
   <meta name="twitter:card" content="summary_large_image">
   <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
   <meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
@@ -20,6 +20,18 @@ function extension(str){
   <meta property="og:image:height" content="<%= height %>"></meta>
   <meta property="og:image:type" content="image/gif"></meta>
   <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.gif"></meta>
+  <% } else if (extension(url)[1] == ".mp4") { %>
+  <meta name="twitter:card" content="player">
+  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
+  <meta property="og:title" content="<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:description" content="Click to view the GIFv"></meta>
+  <meta property="og:site_name" content="embedder"></meta>
+  <meta property="og:type" content="article"></meta>
+  <meta property="og:video" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
+  <meta property="og:video:width" content="<%= width %>"></meta>
+  <meta property="og:video:height" content="<%= height %>"></meta>
+  <meta property="og:video:type" content="video/mp4"></meta>
+  <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
   <% } else { %>
   <meta name="twitter:image" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>">
   <meta name="twitter:card" content="player"></meta>
@@ -38,6 +50,10 @@ function extension(str){
   <% } %>
 </head>
 <body>
-  <img src="/uploads/<%= extension(url)[0]%>.gif" class="image" width="100%">
+  <% if (extension(url)[1] == ".mp4") { %>
+  <video autoplay loop muted playsinline class="image" width="100%"><source src="/uploads/<%= extension(url)[0] %>.mp4"></video>
+  <% } else { %>
+  <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" width="100%">
+  <% } %>
 </body>
 </html>
