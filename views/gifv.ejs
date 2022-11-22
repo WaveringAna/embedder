@@ -38,10 +38,6 @@ function extension(str){
   <% } %>
 </head>
 <body>
-  <% if extension(url)[1] == ".gif") { %>
   <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" width="100%">
-  <% } else { %>
-  <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" width="100%">
-  <% } %>
 </body>
 </html>
