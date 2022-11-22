@@ -33,20 +33,17 @@ function extension(str){
   <meta property="og:video:type" content="video/mp4"></meta>
   <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] %>.mp4"></meta>
   <% } else { %>
-  <meta name="twitter:image" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>">
-  <meta name="twitter:card" content="player"></meta>
-  <meta name="twitter:player" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>">
-  <meta name="twitter:player:width" content="<%= width %>"></meta>
-  <meta name="twitter:player:height" content="<%= height %>"></meta>
-  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
-  <meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
-  <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>"></meta>
-  <meta property="og:description" content="Click to view the Image"></meta>
-  <meta property="og:type" content="video.other"></meta>
-  <meta property="og:image" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>"></meta>
-  <meta property="og:image:type" content="image/<%= extension(url)[1].substr(1,extension(url)[1].length) %>"></meta>
-  <meta property="og:image:width" content="<%= width %>"></meta>
-  <meta property="og:image:height" content="<%= height %>"></meta>
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
+    <meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
+    <meta property="og:description" content="Click to view the image"></meta>
+    <meta property="og:site_name" content="embedder"></meta>
+    <meta property="og:type" content="article"></meta>
+    <meta property="og:image" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>"></meta>
+    <meta property="og:image:width" content="<%= width %>"></meta>
+    <meta property="og:image:height" content="<%= height %>"></meta>
+    <meta property="og:image:type" content="image/<%= extension(url)[1].split('.').join("") %>"></meta>
+    <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>"></meta>
   <% } %>
 </head>
 <body>
