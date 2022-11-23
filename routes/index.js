@@ -1,17 +1,17 @@
-let multer = require("multer");
-let express = require("express");
-let ffmpeg = require("fluent-ffmpeg");
-let imageProbe = require("probe-image-size");
-let ffmpegpath = require("@ffmpeg-installer/ffmpeg").path;
-let ffprobepath = require("@ffprobe-installer/ffprobe").path;
+const multer = require("multer");
+const express = require("express");
+const ffmpeg = require("fluent-ffmpeg");
+const imageProbe = require("probe-image-size");
+const ffmpegpath = require("@ffmpeg-installer/ffmpeg").path;
+const ffprobepath = require("@ffprobe-installer/ffprobe").path;
 
 ffmpeg.setFfmpegPath(ffmpegpath);
 ffmpeg.setFfprobePath(ffprobepath);
 
-let fs = require("fs");
+const fs = require("fs");
 
 let db = require("../db");
-let {checkAuth, convert, handleUpload} = require("../middleware");
+let {checkAuth, convert, handleUpload} = require("./middleware");
 
 function extension(str){
 	let file = str.split("/").pop();

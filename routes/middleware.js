@@ -7,7 +7,7 @@ ffmpeg.setFfprobePath(ffprobepath);
 const fs = require("fs");
 const process = require("process");
 
-let db = require("./db.js");
+let db = require("../db.js");
 
 function extension(str){
 	let file = str.split("/").pop();

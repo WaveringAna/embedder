@@ -1,7 +1,7 @@
-let crypto = require("crypto");
-let express = require("express");
-let passport = require("passport");
-let LocalStrategy = require("passport-local");
+const crypto = require("crypto");
+const express = require("express");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
 
 let db = require("../db");
 
