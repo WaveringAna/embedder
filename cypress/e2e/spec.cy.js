@@ -120,6 +120,8 @@ describe("The Upload Page", () => {
 
 		cy.get("input[type=file]").attachFile("test.png");
 
+		cy.get("select").select("1 minute");
+
 		cy.get("input[type=button][value=Upload]").click();
 
 		cy.url().should("include", "/");
