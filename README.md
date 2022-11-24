@@ -49,7 +49,7 @@ JSON
 
 Docker config
 ```
-docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:main
+docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.1
 ```
 
 Docker Compose
@@ -66,7 +66,7 @@ services:
         volumes:
             - embedderdb:/var/db
             - embedderuploads:/uploads
-        image: ghcr.io/waveringana/embedder:main
+        image: ghcr.io/waveringana/embedder:1.7.1
         network_mode: bridge
 volumes:
     embedderdb:
