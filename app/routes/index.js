@@ -10,7 +10,7 @@ ffmpeg.setFfprobePath(ffprobepath);
 
 const fs = require("fs");
 
-let db = require("../db");
+let db = require("../db").db;
 let {checkAuth, convert, handleUpload} = require("./middleware");
 
 function extension(str){

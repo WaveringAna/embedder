@@ -13,7 +13,7 @@ const path = require("path");
 const authRouter = require("./routes/auth");
 const indexRouter = require("./routes/index");
 
-const db = require("./db");
+const db = require("./db").db;
 
 let app = express();
 let server = http.createServer(app);

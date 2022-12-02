@@ -21,14 +21,13 @@
   },
   "license": "Unlicense",
   "scripts": {
-    "start": "node ./app.js"
+    "start": "node ./app/app.js"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffprobe-installer/ffprobe": "^1.4.1",
     "connect-sqlite3": "^0.9.13",
     "cookie-parser": "~1.4.4",
-    "cypress-real-events": "^1.7.4",
     "dotenv": "^8.6.0",
     "ejs": "^3.1.8",
     "express": "~4.16.1",
@@ -45,6 +44,7 @@
   "devDependencies": {
     "cypress": "^11.1.0",
     "cypress-file-upload": "^5.0.8",
+    "cypress-real-events": "^1.7.4",
     "eslint": "^8.28.0"
   }
 }

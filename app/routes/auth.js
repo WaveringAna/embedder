@@ -3,7 +3,7 @@ const express = require("express");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 
-let db = require("../db");
+let db = require("../db").db;
 
 let router = express.Router();
 

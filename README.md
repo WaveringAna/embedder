@@ -13,11 +13,11 @@ Upcoming Features:
 Source:
 ```Bash
 EBPASS=changeme
-EBPORT=4000
+EBPORT=3000
 EBAPI_KEY=changeme #ShareX support
 
 $ npm install
-$ node db.js
+$ node app/db.js
 $ npm start
 ```
 Default username is admin with the password being whatever EBPASS is
@@ -49,7 +49,7 @@ JSON
 
 Docker config
 ```
-docker run -d -p "4000:4000" -e EBPORT=4000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.1
+docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.1
 ```
 
 Docker Compose
