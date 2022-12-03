@@ -1,21 +1,25 @@
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegpath = require("@ffmpeg-installer/ffmpeg").path;
-const ffprobepath = require("@ffprobe-installer/ffprobe").path;
-ffmpeg.setFfmpegPath(ffmpegpath);
-ffmpeg.setFfprobePath(ffprobepath);
+import type {MediaRow, UserRow} from '../types';
+import type {RequestHandler as Middleware, Router, Request, Response} from 'express';
 
-const fs = require("fs");
-const process = require("process");
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegpath from "@ffmpeg-installer/ffmpeg";
+// @ts-ignore
+import ffprobepath from "@ffprobe-installer/ffprobe";
+ffmpeg.setFfmpegPath(ffmpegpath.path);
+ffmpeg.setFfprobePath(ffprobepath.path);
 
-let db = require("../db.js").db;
+import fs from "fs";
+import process from "process";
 
-function extension(str){
+import db from "../db";
+
+function extension(str: String){
 	let file = str.split("/").pop();
 	return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }
 
 //Checks ShareX key
-function checkAuth(req, res, next) {
+export const checkAuth: Middleware = (req: Request, res: Response, next: Function) => {
 	let auth = process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
 	let key = null;
   
@@ -36,8 +40,9 @@ function checkAuth(req, res, next) {
 }
   
 //Converts mp4 to gif and vice versa with ffmpeg
-function convert(req, res, next) {
+export const convert: Middleware = (req: Request, res: Response, next: Function) => {
 	for (let file in req.files) {
+		// @ts-ignore
 		let nameAndExtension = extension(req.files[file].originalname);
 		let oembed = {
 			type: "video",
@@ -92,7 +97,7 @@ function convert(req, res, next) {
 	next();
 }
   
-function handleUpload(req, res, next) {
+export const handleUpload: Middleware = (req: Request, res: Response, next: Function) => {
 	if (!req.files || Object.keys(req.files).length === 0) {
 		console.log("No files were uploaded");
 		return res.status(400).send("No files were uploaded.");
@@ -100,31 +105,27 @@ function handleUpload(req, res, next) {
   
 	for (let file in req.files) {
 		let currentdate = Date.now();
-		let expireDate;
+		let expireDate: Date;
 		if (req.body.expire) {
 			expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
 			console.log(req.body.expire);
 			console.log(expireDate);
 		} else
 			expireDate = null;
+			// @ts-ignore
 		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [req.files[file].filename, expireDate], function (err) {
 			if (err) { 
 				console.log(err);
 				return next(err);
 			}
+			// @ts-ignore
 			console.log(`Uploaded ${req.files[file].filename} to database`);
 			if (expireDate == null)
 				console.log("It will not expire");
-			else if (expireDate != null || expireDate != undefined || expireDate != "")
+			else if (expireDate != null || expireDate != undefined)
 				console.log(`It will expire on ${expireDate}`);
 		});
 	}
 
 	next();
 }
-
-module.exports = {
-	checkAuth: checkAuth,
-	convert: convert,
-	handleUpload: handleUpload
-};

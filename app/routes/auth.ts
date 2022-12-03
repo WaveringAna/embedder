@@ -1,14 +1,18 @@
-const crypto = require("crypto");
-const express = require("express");
-const passport = require("passport");
-const LocalStrategy = require("passport-local");
+import type {MediaRow, UserRow} from '../types';
+import type {RequestHandler as Middleware} from 'express';
 
-let db = require("../db").db;
+import crypto from "crypto";
+import express from "express";
+import passport from "passport";
+
+import { Strategy as LocalStrategy } from "passport-local";
+
+import db from "../db";
 
 let router = express.Router();
 
 passport.use(new LocalStrategy(function verify(username, password, cb) {
-	db.get("SELECT * FROM users WHERE username = ?", [username], function(err, row) {
+	db.get("SELECT * FROM users WHERE username = ?", [username], function(err: Error, row: UserRow) {
 		if (err) {
 			return cb(err);
 		}
@@ -35,7 +39,9 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 passport.serializeUser(function(user, cb) {
 	process.nextTick(function() {
 		cb(null, {
+			// @ts-ignore
 			id: user.id,
+			// @ts-ignore
 			username: user.username
 		});
 	});
@@ -47,6 +53,7 @@ passport.deserializeUser(function(user, cb) {
 	});
 });
 
+// @ts-ignore
 router.get("/login", function(req, res) {
 	res.render("login");
 });
@@ -66,4 +73,4 @@ router.post("/logout", function(req, res, next) {
 	});
 });
 
-module.exports = router;
+export default router;

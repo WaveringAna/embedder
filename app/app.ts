@@ -1,30 +1,29 @@
+import type {MediaRow, UserRow} from './types';
+
 require("dotenv").config();
 
-const express = require("express");
-const passport = require("passport");
-const session = require("express-session");
-const cookieParser = require("cookie-parser");
-const SQLiteStore = require("connect-sqlite3")(session);
+import express from "express";
+import passport from "passport";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import sqlite3 from "connect-sqlite3";
+const SQLiteStore = sqlite3(session);
 
-const fs = require("fs");
-const http = require("http");
-const path = require("path");
+import fs from "fs";
+import http from "http";
+import path from "path";
 
-const authRouter = require("./routes/auth");
-const indexRouter = require("./routes/index");
+import authRouter from "./routes/auth";
+import indexRouter from "./routes/index";
 
-const db = require("./db").db;
+import {createUser} from "./db";
+import db from "./db"
 
 let app = express();
 let server = http.createServer(app);
 let port = normalizePort(process.env.EBPORT || "3000");
-app.set("port", port);
 
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-
-function normalizePort(val) {
+function normalizePort(val: string) {
 	var port = parseInt(val, 10);
 
 	if (isNaN(port)) {
@@ -40,7 +39,12 @@ function normalizePort(val) {
 	return false;
 }
 
-function onError(error) {
+app.set("port", port);
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+
+function onError(error: any) {
 	if (error.syscall !== "listen") {
 		throw error;
 	}
@@ -63,6 +67,24 @@ function onError(error) {
 		throw error;
 	}
 }
+
+db.serialize(function() {
+	// create the database schema for the todos app
+	db.run("CREATE TABLE IF NOT EXISTS users ( \
+    	id INTEGER PRIMARY KEY, \
+    	username TEXT UNIQUE, \
+    	hashed_password BLOB, \
+    	salt BLOB \
+  	)");
+
+	db.run("CREATE TABLE IF NOT EXISTS media ( \
+    	id INTEGER PRIMARY KEY, \
+    	path TEXT NOT NULL, \
+    	expire INTEGER \
+  	)");
+  
+	createUser("admin", process.env.EBPASS || "changeme");
+});
 
 function onListening() {
 	var addr = server.address();
@@ -90,6 +112,7 @@ app.use(session({
 	secret: process.env.EBSECRET || "pleasechangeme",
 	resave: false,
 	saveUninitialized: false,
+	// @ts-ignore
 	store: new SQLiteStore({
 		db: "sessions.db",
 		dir: "./var/db"
@@ -103,7 +126,7 @@ app.use("/", authRouter);
 app.use("/uploads", express.static("uploads"));
 
 function prune () {
-	db.all("SELECT * FROM media", (err, rows) => {
+	db.all("SELECT * FROM media", (err: Error, rows: []) => {
 		console.log("Uploaded files: " + rows.length);
 		console.log(rows);
 	});
@@ -111,23 +134,23 @@ function prune () {
 	console.log("Vacuuming database...");
 	db.run("VACUUM");
 
-	db.all("SELECT * FROM media WHERE expire < ?", [Date.now()], (err, rows) => {
+	db.all("SELECT * FROM media WHERE expire < ?", [Date.now()], (err: Error, rows: []) => {
 		console.log("Expired rows: " + rows);
 		if (err) return console.error(err);
-		rows.forEach((row) => {
+		rows.forEach((row: MediaRow) => {
 			console.log(`Deleting ${row.path}`);
 			fs.unlink(`uploads/${row.path}`, (err) => {
 				if (err) {
 					if(err.errno == -4058) {
 						console.log("File already deleted");
-						db.all("DELETE FROM media WHERE path = ?", [row.path], (err) => {
+						db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
 							if (err) return console.error(err);
 						});
 					} else {
 						console.error(err);
 					}
 				} else {
-					db.all("DELETE FROM media WHERE path = ?", [row.path], (err) => {
+					db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
 						if (err) return console.error(err);
 					});
 				}
@@ -138,5 +161,3 @@ function prune () {
 }
 
 setInterval(prune, 1000 * 60); //prune every minute
-
-module.exports = app;

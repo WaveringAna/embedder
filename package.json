@@ -23,9 +23,9 @@
   "scripts": {
     "start": "node ./dist/app.js",
     "clean": "rimraf dist/",
-    "copy-files": "copyfiles -a -V -u 1 app/public/* app/views/* app/public/**/* app/views/**/* dist/",
+    "copy-files": "copyfiles -a -u 1 app/public/* app/views/* app/public/**/* app/views/**/* dist/",
     "tsc": "tsc",
-    "postinstall": "npm run tsc",
+    "postinstall": "npm run tsc && npm run copy-files",
     "dev": "tsc-node-dev --respawn --pretty --transpile-only index.ts"
   },
   "dependencies": {
@@ -47,9 +47,18 @@
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {
+    "@types/connect-sqlite3": "^0.9.1",
+    "@types/cookie-parser": "^1.4.3",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.14",
+    "@types/express-session": "^1.17.5",
+    "@types/fluent-ffmpeg": "^2.1.20",
+    "@types/mkdirp": "^1.0.2",
+    "@types/multer": "^1.4.7",
     "@types/node": "^18.11.10",
+    "@types/passport": "^1.0.11",
+    "@types/passport-local": "^1.0.34",
+    "@types/probe-image-size": "^7.2.0",
     "@typescript-eslint/parser": "^5.45.0",
     "copyfiles": "^2.4.1",
     "cypress": "^11.1.0",

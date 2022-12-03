@@ -12,12 +12,11 @@ Upcoming Features:
 
 Source:
 ```Bash
-EBPASS=changeme
-EBPORT=3000
-EBAPI_KEY=changeme #ShareX support
+$ export EBPASS=changeme
+$ export EBPORT=3000
+$ export EBAPI_KEY=changeme #ShareX support
 
 $ npm install
-$ node app/db.js
 $ npm start
 ```
 Default username is admin with the password being whatever EBPASS is

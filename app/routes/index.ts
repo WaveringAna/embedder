@@ -1,19 +1,24 @@
-const multer = require("multer");
-const express = require("express");
-const ffmpeg = require("fluent-ffmpeg");
-const imageProbe = require("probe-image-size");
-const ffmpegpath = require("@ffmpeg-installer/ffmpeg").path;
-const ffprobepath = require("@ffprobe-installer/ffprobe").path;
+import type {RequestHandler as Middleware, Router, Request, Response} from 'express';
+import types from 'multer';
 
-ffmpeg.setFfmpegPath(ffmpegpath);
-ffmpeg.setFfprobePath(ffprobepath);
+import multer from "multer";
+import express from "express";
+import ffmpeg from "fluent-ffmpeg";
+import imageProbe from "probe-image-size";
+import ffmpegpath from "@ffmpeg-installer/ffmpeg";
+// @ts-ignore
+import ffprobepath from "@ffprobe-installer/ffprobe";
 
-const fs = require("fs");
+ffmpeg.setFfmpegPath(ffmpegpath.path);
+ffmpeg.setFfprobePath(ffprobepath.path);
 
-let db = require("../db").db;
-let {checkAuth, convert, handleUpload} = require("./middleware");
+import fs from "fs";
 
-function extension(str){
+import db from "../db";
+import {checkAuth, convert, handleUpload} from "./middleware";
+import { MediaRow } from '../types';
+
+function extension(str: String){
 	let file = str.split("/").pop();
 	return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }
@@ -24,7 +29,7 @@ const storage = multer.diskStorage({
 	},
 	filename : function(req, file, cb) {
 		let nameAndExtension = extension(file.originalname);
-		db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]], function (err, exists) {
+		db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]], function (err: Error, exists: []) {
 			if (exists.length != 0) {
 				let suffix = new Date().getTime() / 1000;
 
@@ -65,10 +70,10 @@ const fileFilter = function(req, file, cb) {
 
 let upload = multer({ storage: storage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 
-function fetchMedia(req, res, next) {
-	db.all("SELECT * FROM media", (err, rows) => {
+const fetchMedia: Middleware = (req, res, next) => {
+	db.all("SELECT * FROM media", (err: Error, rows: []) => {
 		if (err) return next(err);
-		let files = rows.map((row)=> {
+		let files = rows.map((row: MediaRow)=> {
 			return {
 				id: row.id,
 				path: row.path,
@@ -84,11 +89,11 @@ function fetchMedia(req, res, next) {
 
 let router = express.Router();
 
-router.get("/", function (req, res, next) {
+router.get("/", (req, res, next) => {
 	// @ts-ignore, user is part of req header
 	if (!req.user) { return res.render("home"); }
 	next();
-}, fetchMedia, function(req, res) {
+}, fetchMedia, (req, res) => {
 	res.locals.filter = null;
 	// @ts-ignore, user is part of req header
 	res.render("index", { user: req.user });
@@ -125,16 +130,17 @@ router.get("/gifv/:file", async function (req, res, next) {
 	} 
 });
 
-router.post("/", [upload.array("fileupload"), convert, handleUpload], function(req, res) {
+router.post("/", [upload.array("fileupload"), convert, handleUpload], (req: Request, res: Response) => {
 	return res.redirect("/");
 });
 
-router.post("/sharex", [checkAuth, upload.array("fileupload"), convert, handleUpload], function(req, res) {
+router.post("/sharex", [checkAuth, upload.array("fileupload"), convert, handleUpload], (req: Request, res: Response) => {
+	// @ts-ignore
 	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.files[0].filename}`);
 });
 
 router.post("/:id(\\d+)/delete", function(req, res, next) {
-	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], function(err, path) {
+	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], function(err: Error, path: Array<any>) {
 		if (err) { return next(err); }
 		fs.unlink(`uploads/${path[0].path}`, (err => {
 			if (err) {
@@ -142,7 +148,7 @@ router.post("/:id(\\d+)/delete", function(req, res, next) {
 				if (err.errno == -4058) { //File just doesnt exist anymore
 					db.run("DELETE FROM media WHERE id = ?", [
 						req.params.id
-					], function(err) {
+					], (err: Error) => {
 						if (err) { return next(err); }
 						return res.redirect("/");
 					});
@@ -155,7 +161,7 @@ router.post("/:id(\\d+)/delete", function(req, res, next) {
 				//Callback Hell :D
 				db.run("DELETE FROM media WHERE id = ?", [
 					req.params.id
-				], function(err) {
+				], (err: Error) => {
 					if (err) { return next(err); }
 					return res.redirect("/");
 				});
@@ -164,4 +170,4 @@ router.post("/:id(\\d+)/delete", function(req, res, next) {
 	});
 });
 
-module.exports = router;
+export default router;
