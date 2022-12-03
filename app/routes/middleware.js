@@ -100,7 +100,7 @@ function handleUpload(req, res, next) {
   
 	for (let file in req.files) {
 		let currentdate = Date.now();
-		let expireDate= "";
+		let expireDate;
 		if (req.body.expire) {
 			expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
 			console.log(req.body.expire);
@@ -113,10 +113,10 @@ function handleUpload(req, res, next) {
 				return next(err);
 			}
 			console.log(`Uploaded ${req.files[file].filename} to database`);
-			if (expireDate != null || expireDate != undefined || expireDate != "")
-				console.log(`It will expire in ${expireDate} days`);
-			else
+			if (expireDate == null)
 				console.log("It will not expire");
+			else if (expireDate != null || expireDate != undefined || expireDate != "")
+				console.log(`It will expire on ${expireDate}`);
 		});
 	}
 

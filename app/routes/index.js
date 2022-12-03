@@ -85,10 +85,12 @@ function fetchMedia(req, res, next) {
 let router = express.Router();
 
 router.get("/", function (req, res, next) {
+	// @ts-ignore, user is part of req header
 	if (!req.user) { return res.render("home"); }
 	next();
 }, fetchMedia, function(req, res) {
 	res.locals.filter = null;
+	// @ts-ignore, user is part of req header
 	res.render("index", { user: req.user });
 });
 

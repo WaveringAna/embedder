@@ -57,6 +57,7 @@ router.post("/login/password", passport.authenticate("local", {
 }));
 
 router.post("/logout", function(req, res, next) {
+	// @ts-ignore, logout is already initalized in app.js
 	req.logout(function(err) {
 		if (err) {
 			return next(err);
