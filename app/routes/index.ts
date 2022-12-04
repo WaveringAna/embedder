@@ -24,12 +24,12 @@ function extension(str: String){
 }
 
 const storage = multer.diskStorage({
-	destination: function (req, file, cb) {
+	destination:  (req, file, cb) => {
 		cb(null, "uploads/");
 	},
-	filename : function(req, file, cb) {
+	filename : (req, file, cb) => {
 		let nameAndExtension = extension(file.originalname);
-		db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]], function (err: Error, exists: []) {
+		db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]],  (err: Error, exists: []) => {
 			if (exists.length != 0) {
 				let suffix = new Date().getTime() / 1000;
 
@@ -99,16 +99,16 @@ router.get("/", (req, res, next) => {
 	res.render("index", { user: req.user });
 });
 
-router.get("/gifv/:file", async function (req, res, next) {
+router.get("/gifv/:file", async (req, res, next) => {
 	let url = `${req.protocol}://${req.get("host")}/uploads/${req.params.file}`;
 	let width; let height;
 
 	let nameAndExtension = extension("uploads/" + req.params.file);
-	if (nameAndExtension[1] == ".mp4") {
+	if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".mov" || nameAndExtension[1] == ".webm") {
 		ffmpeg()
 			.input("uploads/" + req.params.file)
-			.inputFormat("mp4")
-			.ffprobe(function(err, data) {
+			.inputFormat(nameAndExtension[1].substring(1))
+			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
 				if (err) return next(err);
 				width = data.streams[0].width;
 				height = data.streams[0].height;
@@ -118,14 +118,14 @@ router.get("/gifv/:file", async function (req, res, next) {
 		ffmpeg()
 			.input("uploads/" + req.params.file)
 			.inputFormat("gif")
-			.ffprobe(function(err, data) {
+			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
 				if (err) return next(err);
 				width = data.streams[0].width;
 				height = data.streams[0].height;
 				return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
 			});
 	} else {
-		let imageData = await imageProbe(fs.createReadStream("uploads/" + req.params.file));
+		let imageData = await imageProbe(fs.createReadStream(`uploads/${req.params.file}`));
 		return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: imageData.width, height: imageData.height });
 	} 
 });
@@ -139,8 +139,8 @@ router.post("/sharex", [checkAuth, upload.array("fileupload"), convert, handleUp
 	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.files[0].filename}`);
 });
 
-router.post("/:id(\\d+)/delete", function(req, res, next) {
-	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], function(err: Error, path: Array<any>) {
+router.post("/:id(\\d+)/delete", (req, res, next) => {
+	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], (err: Error, path: Array<any>) => {
 		if (err) { return next(err); }
 		fs.unlink(`uploads/${path[0].path}`, (err => {
 			if (err) {

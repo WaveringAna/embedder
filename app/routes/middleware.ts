@@ -1,4 +1,3 @@
-import type {MediaRow, UserRow} from '../types';
 import type {RequestHandler as Middleware, Router, Request, Response} from 'express';
 
 import ffmpeg from "fluent-ffmpeg";
@@ -34,7 +33,7 @@ export const checkAuth: Middleware = (req: Request, res: Response, next: Functio
 	}
   
 	let shortKey = key.substr(0, 3) + "..."; 
-	console.log("Authenicated user with key: " + shortKey);
+	console.log(`Authenicated user with key: ${shortKey}`);
   
 	next();
 }
