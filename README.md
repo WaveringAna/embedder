@@ -6,7 +6,10 @@ A media host specialized in good looking embeds for services like Discord. No fi
 
 Upcoming Features: 
 * Guest user accounts
+* MariaDB/SQL support (uses sqlite for now)
 
+Potential:
+* IPFS
 
 ## Run
 
@@ -46,9 +49,9 @@ JSON
 }
 ```
 
-Docker config
+Docker Config
 ```
-docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.1
+docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.2
 ```
 
 Docker Compose
@@ -57,19 +60,15 @@ version: '3.3'
 services:
     embedder:
         ports:
-            - '4000:4000'
+            - '3000:3000'
         environment:
-            - EBPORT=4000
+            - EBPORT=3000
             - EBPASS=changeme
             - EBAPI_KEY=changeme
         volumes:
-            - embedderdb:/var/db
-            - embedderuploads:/uploads
-        image: ghcr.io/waveringana/embedder:1.7.1
-        network_mode: bridge
-volumes:
-    embedderdb:
-    embedderuploads:
+            - ./db:/var/db
+            - ./uploads:/uploads
+        image: ghcr.io/waveringana/embedder:1.7.2
 ```
 
 ## License
