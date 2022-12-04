@@ -12,7 +12,7 @@ RUN npm prune --production
 FROM node:16-alpine
 
 COPY --from=BUILD_IMAGE /node_modules ./node_modules
-COPY /dist ./dist
+COPY --from=BUILD_IMAGE /dist ./dist
 COPY package*.json ./
 COPY tsconfig.json ./
 
