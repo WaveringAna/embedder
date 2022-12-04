@@ -41,7 +41,7 @@ body {
 	display: none;
 }
 
-.todoapp {
+.embedderapp {
 	background: #121212;
 	margin: 130px 0 40px 0;
 	position: relative;
@@ -49,28 +49,28 @@ body {
 	            0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
-.todoapp input::-webkit-input-placeholder {
+.embedderapp input::-webkit-input-placeholder {
 	font-style: italic;
 	font-weight: 400;
 	color: #f5f5f5;
 	text-align: center;
 }
 
-.todoapp input::-moz-placeholder {
+.embedderapp input::-moz-placeholder {
 	font-style: italic;
 	font-weight: 400;
 	color: #f5f5f5;
 	text-align: center;
 }
 
-.todoapp input::input-placeholder {
+.embedderapp input::input-placeholder {
 	font-style: italic;
 	font-weight: 400;
 	color: #f5f5f5;
 	text-align: center;
 }
 
-.todoapp h1 {
+.embedderapp h1 {
 	position: absolute;
 	top: -140px;
 	width: 100%;
@@ -83,7 +83,7 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
-.new-todo,
+.new-embedder,
 .edit {
 	position: relative;
 	margin: 0;
@@ -98,7 +98,7 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 }
 
-.new-todo {
+.new-embedder {
 	padding: 16px 16px 16px 60px;
 	height: 65px;
 	border: none;
@@ -147,38 +147,38 @@ body {
 	color: #484848;
 }
 
-.todo-list {
+.embedder-list {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.todo-list li {
+.embedder-list li {
 	position: relative;
 	font-size: 24px;
 }
 
-.todo-list li:last-child {
+.embedder-list li:last-child {
 	border-bottom: none;
 }
 
-.todo-list li.editing {
+.embedder-list li.editing {
 	border-bottom: none;
 	padding: 0;
 }
 
-.todo-list li.editing .edit {
+.embedder-list li.editing .edit {
 	display: block;
 	width: calc(100% - 43px);
 	padding: 12px 16px;
 	margin: 0 0 0 43px;
 }
 
-.todo-list li.editing .view {
+.embedder-list li.editing .view {
 	display: none;
 }
 
-.todo-list li .toggle {
+.embedder-list li .toggle {
 	text-align: center;
 	width: 40px;
 	/* auto, since non-WebKit browsers doesn't support input styling */
@@ -192,11 +192,11 @@ body {
 	appearance: none;
 }
 
-.todo-list li .toggle {
+.embedder-list li .toggle {
 	opacity: 0;
 }
 
-.todo-list li .toggle + label {
+.embedder-list li .toggle + label {
 	/*
 		Firefox requires `#` to be escaped - https://bugzilla.mozilla.org/show_bug.cgi?id=922433
 		IE and Edge requires *everything* to be escaped to render, so we do that instead of just the `#` - https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7157459/
@@ -206,11 +206,11 @@ body {
 	background-position: center left;
 }
 
-.todo-list li .toggle:checked + label {
+.embedder-list li .toggle:checked + label {
 	background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%2359A193%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20fill%3D%22%233EA390%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22%2F%3E%3C%2Fsvg%3E');
 }
 
-.todo-list li label {
+.embedder-list li label {
 	word-break: break-all;
 	padding: 15px 15px 15px 60px;
 	display: block;
@@ -220,16 +220,16 @@ body {
 	color: #BB86FC;
 }
 
-.todo-list li.completed label {
+.embedder-list li.completed label {
 	color: #949494;
 	text-decoration: line-through;
 }
 
-.todo-list li .destroy {
+.embedder-list li .fullsize {
 	display: none;
 	position: absolute;
 	top: 0;
-	right: 10px;
+	left: 0px;
 	bottom: 0;
 	width: 40px;
 	height: 40px;
@@ -239,27 +239,57 @@ body {
 	transition: color 0.2s ease-out;
 }
 
-.todo-list li .destroy:hover,
-.todo-list li .destroy:focus {
+.embedder-list li .fullsize:hover,
+.embedder-list li .fullsize:focus {
 	color: #C18585;
 }
 
-.todo-list li .destroy:after {
+.embedder-list li .fullsize:after {
+	content: '[]';
+	display: block;
+	height: 100%;
+	line-height: 1.1;
+}
+
+.embedder-list li:hover .fullsize {
+	display: block;
+}
+
+.embedder-list li .destroy {
+	display: none;
+	position: absolute;
+	top: 0;
+	right: 0px;
+	bottom: 0;
+	width: 40px;
+	height: 40px;
+	margin: auto 0;
+	font-size: 30px;
+	color: #949494;
+	transition: color 0.2s ease-out;
+}
+
+.embedder-list li .destroy:hover,
+.embedder-list li .destroy:focus {
+	color: #C18585;
+}
+
+.embedder-list li .destroy:after {
 	content: '×';
 	display: block;
 	height: 100%;
 	line-height: 1.1;
 }
 
-.todo-list li:hover .destroy {
+.embedder-list li:hover .destroy {
 	display: block;
 }
 
-.todo-list li .edit {
+.embedder-list li .edit {
 	display: none;
 }
 
-.todo-list li.editing:last-child {
+.embedder-list li.editing:last-child {
 	margin-bottom: -1px;
 }
 
@@ -286,12 +316,12 @@ body {
 	            0 17px 2px -6px rgba(0, 0, 0, 0.2);
 }
 
-.todo-count {
+.embedder-count {
 	float: left;
 	text-align: left;
 }
 
-.todo-count strong {
+.embedder-count strong {
 	font-weight: 300;
 }
 
@@ -366,11 +396,11 @@ html .clear-completed:active {
 */
 @media screen and (-webkit-min-device-pixel-ratio:0) {
 	.toggle-all,
-	.todo-list li .toggle {
+	.embedder-list li .toggle {
 		background: none;
 	}
 
-	.todo-list li .toggle {
+	.embedder-list li .toggle {
 		height: 40px;
 	}
 }

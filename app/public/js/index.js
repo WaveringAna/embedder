@@ -141,3 +141,32 @@ function uploadFile(file) {
 	console.log(formData);
 	xhr.send(formData);
 }
+
+function openFullSize(imageUrl) {
+	let modal = document.createElement("div");
+	modal.classList.add("modal");
+	let img = document.createElement("img");
+	let video = document.createElement("video");
+	img.src = imageUrl;
+	video.src = imageUrl;
+	video.controls = true;
+
+	if (extension(imageUrl) == ".jpg" || extension(imageUrl) == ".png" || extension(imageUrl) == ".gif" || extension(imageUrl) == ".jpeg" || extension(imageUrl) == ".webp") {
+		modal.appendChild(img);
+	}
+	else if (extension(imageUrl) == ".mp4" || extension(imageUrl) == ".webm" || extension(imageUrl) == ".mov") {
+		modal.appendChild(video);
+	}
+  
+	// Add the modal to the page
+	document.body.appendChild(modal);
+  
+	// Add an event listener to close the modal when the user clicks on it
+	modal.addEventListener('click', function() {
+		modal.remove();
+	});
+}
+
+function extension(string) {
+	return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
+}

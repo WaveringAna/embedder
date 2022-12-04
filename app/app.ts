@@ -69,7 +69,7 @@ function onError(error: any) {
 }
 
 db.serialize(function() {
-	// create the database schema for the todos app
+	// create the database schema for the embedders app
 	db.run("CREATE TABLE IF NOT EXISTS users ( \
     	id INTEGER PRIMARY KEY, \
     	username TEXT UNIQUE, \

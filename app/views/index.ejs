@@ -18,7 +18,7 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
 %>
     </head>
     <body>
-        <section class="todoapp">
+        <section class="embedderapp">
             <nav class="nav">
                 <ul>
                     <li class="user"><%= user.name || user.username %></li>
@@ -55,7 +55,7 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
             </header>
             <% if (Count > 0) { %>
             <section class="main">
-                <ul class="todo-list">
+                <ul class="embedder-list">
                     <% files.forEach(function(file) { %>
                     <li>
                         <form action="<%= file.url %>" method="post">
@@ -71,7 +71,7 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                                   </div>
                                   <% } else if (extension(file.path) == ".gif") { %>
                                   <div class="video">
-                                  <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)" loading="lazy">
+                                  <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event);" loading="lazy">
                                   <div class="overlay">
                                     <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
                                   </div>
@@ -85,6 +85,7 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                                 <% } %>
                                 <label><%= file.path %></label>
                                 <button class="destroy" form="delete-<%= file.path %>"></button>
+                                <button type="button" class="fullsize" onclick="openFullSize('/uploads/<%=file.path%>')"></button>
                             </div>
                         </form>
                         <form name="delete-<%= file.path %>" id="delete-<%= file.path %>" action="<%= file.url %>/delete" method="post">
