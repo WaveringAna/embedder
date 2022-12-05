@@ -15,9 +15,9 @@ import path from "path";
 
 import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
+import adduserRouter from "./routes/adduser";
 
-import {createUser} from "./db";
-import db from "./db"
+import {db, createUser} from "./db";
 
 let app = express();
 let server = http.createServer(app);
@@ -122,6 +122,7 @@ app.use(passport.authenticate("session"));
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
+app.use("/", adduserRouter);
 
 app.use("/uploads", express.static("uploads"));
 

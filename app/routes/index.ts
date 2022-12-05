@@ -1,5 +1,4 @@
-import type {RequestHandler as Middleware, Router, Request, Response} from 'express';
-import types from 'multer';
+import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from 'express';
 
 import multer from "multer";
 import express from "express";
@@ -14,8 +13,8 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 
 import fs from "fs";
 
-import db from "../db";
-import {checkAuth, convert, handleUpload} from "./middleware";
+import {db, createUser} from "../db";
+import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
 import { MediaRow } from '../types';
 
 function extension(str: String){
@@ -89,13 +88,12 @@ const fetchMedia: Middleware = (req, res, next) => {
 
 let router = express.Router();
 
-router.get("/", (req, res, next) => {
-	// @ts-ignore, user is part of req header
-	if (!req.user) { return res.render("home"); }
+router.get("/", (req: Request, res: Response, next: NextFunction) => {
+	if (!req.user)
+		return res.render("home")
 	next();
-}, fetchMedia, (req, res) => {
+}, fetchMedia, (req: Request, res: Response) => {
 	res.locals.filter = null;
-	// @ts-ignore, user is part of req header
 	res.render("index", { user: req.user });
 });
 
@@ -103,10 +101,10 @@ router.get("/gifv/:file", async (req, res, next) => {
 	let url = `${req.protocol}://${req.get("host")}/uploads/${req.params.file}`;
 	let width; let height;
 
-	let nameAndExtension = extension("uploads/" + req.params.file);
+	let nameAndExtension = extension(`uploads/${req.params.file}`);
 	if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".mov" || nameAndExtension[1] == ".webm") {
 		ffmpeg()
-			.input("uploads/" + req.params.file)
+			.input(`uploads/${req.params.file}`)
 			.inputFormat(nameAndExtension[1].substring(1))
 			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
 				if (err) return next(err);
@@ -116,7 +114,7 @@ router.get("/gifv/:file", async (req, res, next) => {
 			}); 
 	} else if (nameAndExtension[1] == ".gif") {
 		ffmpeg()
-			.input("uploads/" + req.params.file)
+			.input(`uploads/${req.params.file}`)
 			.inputFormat("gif")
 			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
 				if (err) return next(err);
@@ -130,16 +128,16 @@ router.get("/gifv/:file", async (req, res, next) => {
 	} 
 });
 
-router.post("/", [upload.array("fileupload"), convert, handleUpload], (req: Request, res: Response) => {
-	return res.redirect("/");
+router.post("/", [checkAuth, upload.array("fileupload"), createEmbedData, handleUpload], (req: Request, res: Response) => {
+	res.redirect("/")
 });
 
-router.post("/sharex", [checkAuth, upload.array("fileupload"), convert, handleUpload], (req: Request, res: Response) => {
+router.post("/sharex", [checkSharexAuth, upload.array("fileupload"), createEmbedData, handleUpload], (req: Request, res: Response) => {
 	// @ts-ignore
 	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.files[0].filename}`);
 });
 
-router.post("/:id(\\d+)/delete", (req, res, next) => {
+router.post("/:id(\\d+)/delete", [checkAuth], (req: Request, res: Response, next: NextFunction) => {
 	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], (err: Error, path: Array<any>) => {
 		if (err) { return next(err); }
 		fs.unlink(`uploads/${path[0].path}`, (err => {

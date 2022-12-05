@@ -27,6 +27,11 @@ return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
                             <button class="logout" type="submit">Sign out</button>
                         </form>
                     </li>
+                    <% if (user.name == "admin" || user.username == "admin") { %>
+                    <li>
+                        <button class="adduser" onclick="location.href='/adduser';">Add user</a></button>
+                    </li>
+                    <% } %>
                 </ul>
             </nav>
             <header class="header">

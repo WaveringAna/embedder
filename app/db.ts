@@ -1,13 +1,11 @@
-import type {RequestHandler as Middleware} from 'express';
-
-const sqlite3 = require("sqlite3");
-const mkdirp = require("mkdirp");
-const crypto = require("crypto");
+import sqlite3 from "sqlite3";
+import mkdirp from "mkdirp";
+import crypto from "crypto";
 
 mkdirp.sync("./uploads");
 mkdirp.sync("./var/db");
 
-let db = new sqlite3.Database("./var/db/media.db");
+export const db = new sqlite3.Database("./var/db/media.db");
 
 export function createUser(username: string, password: string) {
 	var salt = crypto.randomBytes(16);
@@ -17,5 +15,3 @@ export function createUser(username: string, password: string) {
 		salt
 	]);
 }
-
-export default db;

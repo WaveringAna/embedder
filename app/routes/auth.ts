@@ -1,13 +1,11 @@
-import type {MediaRow, UserRow} from '../types';
-import type {RequestHandler as Middleware} from 'express';
+import type {UserRow} from '../types';
 
 import crypto from "crypto";
 import express from "express";
 import passport from "passport";
+import {Strategy as LocalStrategy} from "passport-local";
 
-import { Strategy as LocalStrategy } from "passport-local";
-
-import db from "../db";
+import {db} from "../db";
 
 let router = express.Router();
 

@@ -10,15 +10,21 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 import fs from "fs";
 import process from "process";
 
-import db from "../db";
+import {db} from "../db";
 
 function extension(str: String){
 	let file = str.split("/").pop();
 	return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }
 
-//Checks ShareX key
-export const checkAuth: Middleware = (req: Request, res: Response, next: Function) => {
+export const checkAuth: Middleware = (req, res, next) => {
+	if (!req.user) {
+        return res.status(401);
+    }
+    next();
+}
+
+export const checkSharexAuth: Middleware = (req, res, next) => {
 	let auth = process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
 	let key = null;
   
@@ -38,8 +44,8 @@ export const checkAuth: Middleware = (req: Request, res: Response, next: Functio
 	next();
 }
   
-//Converts mp4 to gif and vice versa with ffmpeg
-export const convert: Middleware = (req: Request, res: Response, next: Function) => {
+//createEmbedDatas mp4 to gif and vice versa with ffmpeg
+export const createEmbedData: Middleware = (req, res, next) => {
 	for (let file in req.files) {
 		// @ts-ignore
 		let nameAndExtension = extension(req.files[file].originalname);
@@ -58,13 +64,20 @@ export const convert: Middleware = (req: Request, res: Response, next: Function)
 			if (err) return next(err);
 			console.log(`oembed file created ${nameAndExtension[0]}${nameAndExtension[1]}.json`);
 		});
-  
-		/**if (nameAndExtension[1] == ".mp4") {
+	}
+	next();
+}
+
+export const convert: Middleware = (req, res, next)  => {
+	for (let file in req.files) {
+		// @ts-ignore
+		let nameAndExtension = extension(req.files[file].originalname);
+		if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".mkv" || nameAndExtension[1] == ".avi" || nameAndExtension[1] == ".mov") {
 			console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
 			console.log(nameAndExtension[0] + nameAndExtension[1]);
 			ffmpeg()
 				.input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
-				.inputFormat("mp4")
+				.inputFormat(nameAndExtension[1].substring(1))
 				.outputFormat("gif")
 				.output(`uploads/${nameAndExtension[0]}.gif`)
 				.on("end", function() {
@@ -90,13 +103,11 @@ export const convert: Middleware = (req: Request, res: Response, next: Function)
 					console.log(`Uploaded to uploads/${nameAndExtension[0]}.mp4`);
 				})
 				.run();
-		}**/
+		}
 	}
-  
-	next();
 }
-  
-export const handleUpload: Middleware = (req: Request, res: Response, next: Function) => {
+
+export const handleUpload: Middleware = (req, res, next) => {
 	if (!req.files || Object.keys(req.files).length === 0) {
 		console.log("No files were uploaded");
 		return res.status(400).send("No files were uploaded.");

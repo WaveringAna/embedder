@@ -131,8 +131,6 @@ function uploadFile(file) {
 	});
 
 	if (file == null || file == undefined) {
-		//file = reader.readAsDataURL(document.getElementById("fileupload").files[0]);
-		//file = reader.readAsDataURL(document.querySelector("#fileupload").files[0]);
 		file = document.querySelector("#fileupload").files[0];
 	}
 
