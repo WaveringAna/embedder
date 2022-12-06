@@ -132,9 +132,8 @@ router.post("/", [checkAuth, upload.array("fileupload"), createEmbedData, handle
 	res.redirect("/")
 });
 
-router.post("/sharex", [checkSharexAuth, upload.array("fileupload"), createEmbedData, handleUpload], (req: Request, res: Response) => {
-	// @ts-ignore
-	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.files[0].filename}`);
+router.post("/sharex", [checkSharexAuth, upload.single("fileupload"), createEmbedData, handleUpload], (req: Request, res: Response) => {
+	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`);
 });
 
 router.post("/:id(\\d+)/delete", [checkAuth], (req: Request, res: Response, next: NextFunction) => {

@@ -34,12 +34,10 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 	});
 }));
 
-passport.serializeUser(function(user, cb) {
+passport.serializeUser(function(user:any, cb) {
 	process.nextTick(function() {
 		cb(null, {
-			// @ts-ignore
 			id: user.id,
-			// @ts-ignore
 			username: user.username
 		});
 	});
@@ -51,7 +49,6 @@ passport.deserializeUser(function(user, cb) {
 	});
 });
 
-// @ts-ignore
 router.get("/login", function(req, res) {
 	res.render("login");
 });
@@ -62,7 +59,6 @@ router.post("/login/password", passport.authenticate("local", {
 }));
 
 router.post("/logout", function(req, res, next) {
-	// @ts-ignore, logout is already initalized in app.js
 	req.logout(function(err) {
 		if (err) {
 			return next(err);

@@ -46,9 +46,9 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
   
 //createEmbedDatas mp4 to gif and vice versa with ffmpeg
 export const createEmbedData: Middleware = (req, res, next) => {
-	for (let file in req.files) {
-		// @ts-ignore
-		let nameAndExtension = extension(req.files[file].originalname);
+	const files = req.files as Express.Multer.File[]
+	for (let file in files) {
+		let nameAndExtension = extension(files[file].originalname);
 		let oembed = {
 			type: "video",
 			version: "1.0",
@@ -69,9 +69,9 @@ export const createEmbedData: Middleware = (req, res, next) => {
 }
 
 export const convert: Middleware = (req, res, next)  => {
-	for (let file in req.files) {
-		// @ts-ignore
-		let nameAndExtension = extension(req.files[file].originalname);
+	const files = req.files as Express.Multer.File[]
+	for (let file in files) {
+		let nameAndExtension = extension(files[file].originalname);
 		if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".mkv" || nameAndExtension[1] == ".avi" || nameAndExtension[1] == ".mov") {
 			console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
 			console.log(nameAndExtension[0] + nameAndExtension[1]);
@@ -113,7 +113,9 @@ export const handleUpload: Middleware = (req, res, next) => {
 		return res.status(400).send("No files were uploaded.");
 	}
   
-	for (let file in req.files) {
+	const files = req.files as Express.Multer.File[]
+
+	for (let file in files) {
 		let currentdate = Date.now();
 		let expireDate: Date;
 		if (req.body.expire) {
@@ -122,14 +124,12 @@ export const handleUpload: Middleware = (req, res, next) => {
 			console.log(expireDate);
 		} else
 			expireDate = null;
-			// @ts-ignore
-		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [req.files[file].filename, expireDate], function (err) {
+		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [files[file].filename, expireDate], function (err) {
 			if (err) { 
 				console.log(err);
 				return next(err);
 			}
-			// @ts-ignore
-			console.log(`Uploaded ${req.files[file].filename} to database`);
+			console.log(`Uploaded ${files[file].filename} to database`);
 			if (expireDate == null)
 				console.log("It will not expire");
 			else if (expireDate != null || expireDate != undefined)

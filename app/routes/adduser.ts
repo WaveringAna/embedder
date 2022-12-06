@@ -6,7 +6,6 @@ import {db, createUser} from "../db";
 const router: Router = express.Router();
 
 const adminCheck: Middleware = (req: Request, res: Response, next: NextFunction) => {
-    //@ts-ignore
     if (!req.user)
         return res.status(403).send("You are not authorized to perform this action");
     else {
