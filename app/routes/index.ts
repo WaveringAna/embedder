@@ -1,5 +1,4 @@
-import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from 'express';
-
+import type {RequestHandler as Middleware, Request, Response, NextFunction} from 'express';
 import multer from "multer";
 import express from "express";
 import ffmpeg from "fluent-ffmpeg";
@@ -13,70 +12,27 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 
 import fs from "fs";
 
-import {db, createUser} from "../db";
+import {extension} from "../lib";
+import {db, MediaRow} from "../db";
+import {fileStorage, fileFilter} from "../multer";
 import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
-import { MediaRow } from '../types';
 
-function extension(str: String){
-	let file = str.split("/").pop();
-	return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
-}
-
-const storage = multer.diskStorage({
-	destination:  (req, file, cb) => {
-		cb(null, "uploads/");
-	},
-	filename : (req, file, cb) => {
-		let nameAndExtension = extension(file.originalname);
-		db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]],  (err: Error, exists: []) => {
-			if (exists.length != 0) {
-				let suffix = new Date().getTime() / 1000;
-
-				if (req.body.title == "" || req.body.title  == null || req.body.title == undefined)
-					cb(null, nameAndExtension[0] + "-" + suffix + nameAndExtension[1]);
-				else
-					cb(null, req.body.title + "-" + suffix + nameAndExtension[1]);
-			} else {
-				if (req.body.title == "" || req.body.title  == null || req.body.title == undefined)
-					cb(null, nameAndExtension[0] + nameAndExtension[1]);
-				else
-					cb(null, req.body.title + nameAndExtension[1]);
-			}
-		});
-	}
-});
-
-/**let allowedMimeTypes = [
-	"image/png",
-	"image/jpg",
-	"image/jpeg",
-	"image/gif",
-	"image/webp",
-	"video/mp4",
-	"video/mov",
-	"video/webm",
-	"audio/mpeg",
-	"audio/ogg"
-];
-
-const fileFilter = function(req, file, cb) {
-	if (allowedMimeTypes.includes(file.mimetype)) {
-		cb(null, true);
-	} else {
-		cb(null, false);
-	}
-};**/
-
-let upload = multer({ storage: storage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
+let upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 
 const fetchMedia: Middleware = (req, res, next) => {
-	db.all("SELECT * FROM media", (err: Error, rows: []) => {
+	//@ts-ignore
+	let admin: boolean = req.user.username == "admin" ? true : false
+	//@ts-ignore
+	let query: string = admin == true ? "SELECT * FROM media" : `SELECT * FROM media WHERE username = '${req.user.username}'`;
+
+	db.all(query, (err:Error, rows: []) => {
 		if (err) return next(err);
 		let files = rows.map((row: MediaRow)=> {
 			return {
 				id: row.id,
 				path: row.path,
 				expire: row.expire,
+				username: row.username,
 				url: "/" + row.id
 			};
 		});
@@ -102,26 +58,16 @@ router.get("/gifv/:file", async (req, res, next) => {
 	let width; let height;
 
 	let nameAndExtension = extension(`uploads/${req.params.file}`);
-	if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".mov" || nameAndExtension[1] == ".webm") {
+	if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".mov" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".gif") {
 		ffmpeg()
-			.input(`uploads/${req.params.file}`)
-			.inputFormat(nameAndExtension[1].substring(1))
-			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
-				if (err) return next(err);
-				width = data.streams[0].width;
-				height = data.streams[0].height;
-				return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
-			}); 
-	} else if (nameAndExtension[1] == ".gif") {
-		ffmpeg()
-			.input(`uploads/${req.params.file}`)
-			.inputFormat("gif")
-			.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
-				if (err) return next(err);
-				width = data.streams[0].width;
-				height = data.streams[0].height;
-				return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
-			});
+		.input(`uploads/${req.params.file}`)
+		.inputFormat(nameAndExtension[1].substring(1))
+		.ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
+			if (err) return next(err);
+			width = data.streams[0].width;
+			height = data.streams[0].height;
+			return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
+		}); 
 	} else {
 		let imageData = await imageProbe(fs.createReadStream(`uploads/${req.params.file}`));
 		return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: imageData.width, height: imageData.height });

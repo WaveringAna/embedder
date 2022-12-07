@@ -1,11 +1,9 @@
-import type {UserRow} from '../types';
-
 import crypto from "crypto";
 import express from "express";
 import passport from "passport";
 import {Strategy as LocalStrategy} from "passport-local";
 
-import {db} from "../db";
+import {db, UserRow} from "../db";
 
 let router = express.Router();
 

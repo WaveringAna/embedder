@@ -1,5 +1,3 @@
-import type {MediaRow, UserRow} from './types';
-
 require("dotenv").config();
 
 import express from "express";
@@ -17,7 +15,7 @@ import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 
-import {db, createUser} from "./db";
+import {db, createUser, MediaRow} from "./db";
 
 let app = express();
 let server = http.createServer(app);
@@ -80,8 +78,14 @@ db.serialize(function() {
 	db.run("CREATE TABLE IF NOT EXISTS media ( \
     	id INTEGER PRIMARY KEY, \
     	path TEXT NOT NULL, \
-    	expire INTEGER \
+    	expire INTEGER \, \
+			username TEXT \
   	)");
+
+	db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
+		if(err)
+			return;
+	}); //TODO, version new DB, run this command when detecting old DB
   
 	createUser("admin", process.env.EBPASS || "changeme");
 });

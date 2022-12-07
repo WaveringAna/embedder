@@ -11,11 +11,7 @@ import fs from "fs";
 import process from "process";
 
 import {db} from "../db";
-
-function extension(str: String){
-	let file = str.split("/").pop();
-	return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
-}
+import {extension} from "../lib";
 
 export const checkAuth: Middleware = (req, res, next) => {
 	if (!req.user) {
@@ -120,11 +116,10 @@ export const handleUpload: Middleware = (req, res, next) => {
 		let expireDate: Date;
 		if (req.body.expire) {
 			expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
-			console.log(req.body.expire);
-			console.log(expireDate);
 		} else
 			expireDate = null;
-		db.run("INSERT INTO media (path, expire) VALUES (?, ?)", [files[file].filename, expireDate], function (err) {
+		//@ts-ignore
+		db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", [files[file].filename, expireDate, req.user.username], function (err) {
 			if (err) { 
 				console.log(err);
 				return next(err);
