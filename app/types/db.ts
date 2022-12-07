@@ -19,9 +19,15 @@ export function createUser(username: string, password: string) {
 export interface MediaRow {
 	id? : Number,
 	path: String,
-	expire: Number,
-	username: String
+	expire: Date,
+	username?: String
 }
+
+export type MediaParams = [
+	path: String,
+	expire: Date,
+	username?: String
+]
 
 export interface UserRow {
 	id? : Number,

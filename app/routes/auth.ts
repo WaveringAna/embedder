@@ -3,7 +3,8 @@ import express from "express";
 import passport from "passport";
 import {Strategy as LocalStrategy} from "passport-local";
 
-import {db, UserRow} from "../db";
+import {User} from "../types/lib"
+import {db, UserRow} from "../types/db";
 
 let router = express.Router();
 
@@ -32,7 +33,7 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 	});
 }));
 
-passport.serializeUser(function(user:any, cb) {
+passport.serializeUser(function(user:User, cb) {
 	process.nextTick(function() {
 		cb(null, {
 			id: user.id,
@@ -41,7 +42,7 @@ passport.serializeUser(function(user:any, cb) {
 	});
 });
 
-passport.deserializeUser(function(user, cb) {
+passport.deserializeUser(function(user:User, cb) {
 	process.nextTick(function() {
 		return cb(null, user);
 	});

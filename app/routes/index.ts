@@ -12,17 +12,15 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 
 import fs from "fs";
 
-import {extension} from "../lib";
-import {db, MediaRow} from "../db";
-import {fileStorage, fileFilter} from "../multer";
+import {extension} from "../types/lib";
+import {db, MediaRow} from "../types/db";
+import {fileStorage, fileFilter} from "../types/multer";
 import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
 
 let upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 
 const fetchMedia: Middleware = (req, res, next) => {
-	//@ts-ignore
 	let admin: boolean = req.user.username == "admin" ? true : false
-	//@ts-ignore
 	let query: string = admin == true ? "SELECT * FROM media" : `SELECT * FROM media WHERE username = '${req.user.username}'`;
 
 	db.all(query, (err:Error, rows: []) => {
@@ -53,7 +51,7 @@ router.get("/", (req: Request, res: Response, next: NextFunction) => {
 	res.render("index", { user: req.user });
 });
 
-router.get("/gifv/:file", async (req, res, next) => {
+router.get("/gifv/:file", async (req: Request, res: Response, next: NextFunction) => {
 	let url = `${req.protocol}://${req.get("host")}/uploads/${req.params.file}`;
 	let width; let height;
 

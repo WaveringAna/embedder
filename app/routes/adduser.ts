@@ -1,7 +1,7 @@
 import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from 'express';
 import express from "express";
 
-import {db, createUser} from "../db";
+import {db, createUser} from "../types/db";
 
 const router: Router = express.Router();
 
@@ -9,7 +9,6 @@ const adminCheck: Middleware = (req: Request, res: Response, next: NextFunction)
     if (!req.user)
         return res.status(403).send("You are not authorized to perform this action");
     else {
-        //@ts-ignore
         if (req.user.username != "admin")
             return res.status(403).send("You are not authorized to perform this action");
         next();

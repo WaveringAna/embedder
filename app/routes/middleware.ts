@@ -1,4 +1,4 @@
-import type {RequestHandler as Middleware, Router, Request, Response} from 'express';
+import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from 'express';
 
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegpath from "@ffmpeg-installer/ffmpeg";
@@ -10,8 +10,8 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 import fs from "fs";
 import process from "process";
 
-import {db} from "../db";
-import {extension} from "../lib";
+import {extension} from "../types/lib";
+import {db, MediaParams} from "../types/db";
 
 export const checkAuth: Middleware = (req, res, next) => {
 	if (!req.user) {
@@ -70,7 +70,6 @@ export const convert: Middleware = (req, res, next)  => {
 		let nameAndExtension = extension(files[file].originalname);
 		if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".mkv" || nameAndExtension[1] == ".avi" || nameAndExtension[1] == ".mov") {
 			console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
-			console.log(nameAndExtension[0] + nameAndExtension[1]);
 			ffmpeg()
 				.input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
 				.inputFormat(nameAndExtension[1].substring(1))
@@ -104,33 +103,48 @@ export const convert: Middleware = (req, res, next)  => {
 }
 
 export const handleUpload: Middleware = (req, res, next) => {
-	if (!req.files || Object.keys(req.files).length === 0) {
+	if (!req.file && !req.files) {
 		console.log("No files were uploaded");
 		return res.status(400).send("No files were uploaded.");
 	}
-  
-	const files = req.files as Express.Multer.File[]
 
-	for (let file in files) {
-		let currentdate = Date.now();
-		let expireDate: Date;
-		if (req.body.expire) {
-			expireDate = new Date(currentdate + (req.body.expire * 24 * 60 * 60 * 1000));
-		} else
-			expireDate = null;
-		//@ts-ignore
-		db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", [files[file].filename, expireDate, req.user.username], function (err) {
-			if (err) { 
-				console.log(err);
-				return next(err);
-			}
-			console.log(`Uploaded ${files[file].filename} to database`);
-			if (expireDate == null)
-				console.log("It will not expire");
-			else if (expireDate != null || expireDate != undefined)
-				console.log(`It will expire on ${expireDate}`);
-		});
-	}
+	//Check if a single file was uploaded or multiple
+	const files = (req.files) ? req.files as Express.Multer.File[] : req.file;
+	//if no username was provided, we can presume that it is sharex
+	const username = (req.user) ? req.user.username : "sharex" 
+	
+	let expireDate: Date;
+	if (req.body.expire) {
+		expireDate = new Date(Date.now() + (req.body.expire * 24 * 60 * 60 * 1000));
+	} else
+		expireDate = null;
+
+	if (files instanceof Array) {
+		for (let file in files) {
+			insertToDB(files[file].filename, expireDate, username, next);
+		}
+	} else
+		insertToDB(files.filename, expireDate, username, next);
 
 	next();
+}
+
+function insertToDB (filename: String, expireDate: Date, username: String, next: NextFunction) {
+	let params: MediaParams = [
+		filename, 
+		expireDate, 
+		username
+	 ]
+	
+	db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", params, function (err) {
+		if (err) { 
+			console.log(err);
+			return next(err);
+		}
+		console.log(`Uploaded ${filename} to database`);
+		if (expireDate == null)
+			console.log("It will not expire");
+		else if (expireDate != null || expireDate != undefined)
+			console.log(`It will expire on ${expireDate}`);
+	});
 }

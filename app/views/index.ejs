@@ -95,20 +95,20 @@
                         <% } else if (extension(file.path) == ".jpg" || extension(file.path) == ".jpeg" || extension(file.path) == ".png" || extension(file.path) == ".gif" || extension(file.path) == ".webp" ) { %>
                         <div class="video">
                            <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)" loading="lazy">
+                           <% if(user.username == "admin" && file.username != "admin") { %>
                            <div class="overlay">
-                              <% if(user.username == "admin" && file.username != "admin") { %>
                               <small class="username"><%= file.username %></small>
-                              <% } %> 
                            </div>
+                           <% } %> 
                         </div>
                         <% } else {%> <!-- non-media file -->
                         <div class="nonmedia" onclick="copyPath('/uploads/<%=file.path%>')">
                            <p><%=extension(file.path)%> file</p>
+                           <% if(user.username == "admin" && file.username != "admin") { %>
                            <div class="overlay">
-                              <% if(user.username == "admin" && file.username != "admin") { %>
                               <small class="username"><%= file.username %></small>
-                              <% } %>
                            </div>
+                           <% } %>
                         </div>
                         <% } %>
                         <label><%= file.path %></label>
