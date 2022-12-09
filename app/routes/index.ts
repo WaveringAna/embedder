@@ -13,7 +13,7 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 import fs from "fs";
 
 import {extension} from "../types/lib";
-import {db, MediaRow} from "../types/db";
+import {db, MediaRow, getPath, deleteId} from "../types/db";
 import {fileStorage, fileFilter} from "../types/multer";
 import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
 
@@ -80,35 +80,19 @@ router.post("/sharex", [checkSharexAuth, upload.single("fileupload"), createEmbe
 	return res.send(`${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`);
 });
 
-router.post("/:id(\\d+)/delete", [checkAuth], (req: Request, res: Response, next: NextFunction) => {
-	db.all("SELECT path FROM media WHERE id = ?", [ req.params.id ], (err: Error, path: Array<any>) => {
-		if (err) { return next(err); }
-		fs.unlink(`uploads/${path[0].path}`, (err => {
-			if (err) {
-				console.log(err);
-				if (err.errno == -4058) { //File just doesnt exist anymore
-					db.run("DELETE FROM media WHERE id = ?", [
-						req.params.id
-					], (err: Error) => {
-						if (err) { return next(err); }
-						return res.redirect("/");
-					});
-				} else {
-					console.log(err);
-					return res.redirect("/");
-				}
-			} else {
-				console.log(`Deleted ${path}`);
-				//Callback Hell :D
-				db.run("DELETE FROM media WHERE id = ?", [
-					req.params.id
-				], (err: Error) => {
-					if (err) { return next(err); }
-					return res.redirect("/");
-				});
-			}
-		}));
-	});
+router.post("/:id(\\d+)/delete", [checkAuth], async (req: Request, res: Response, next: NextFunction) => {
+	const path: any = await getPath(req.params.id)
+	fs.unlink(`uploads/${path.path}`, async (err) => {
+		if (err && err.errno == -4058) {
+			await deleteId("media", req.params.id).then(()=> {
+				return res.redirect("/");
+			})
+		} else {
+			await deleteId("media", req.params.id).then(()=> {
+				return res.redirect("/");
+			})
+		}
+	})
 });
 
 export default router;

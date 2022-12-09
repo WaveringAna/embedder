@@ -1,6 +1,7 @@
 import sqlite3 from "sqlite3";
 import mkdirp from "mkdirp";
 import crypto from "crypto";
+import { FileFilterCallback } from "multer";
 
 mkdirp.sync("./uploads");
 mkdirp.sync("./var/db");
@@ -14,6 +15,26 @@ export function createUser(username: string, password: string) {
 		crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256"),
 		salt
 	]);
+}
+
+export function getPath(id: number | string) {
+	return new Promise((resolve, reject) => {
+		let query: string = `SELECT path FROM media WHERE id = ?`;
+		db.get(query, [id], (err: Error, path: object) => {
+			if (err) {reject(err)}
+			resolve(path)
+		});
+	})
+}
+
+export function deleteId(database: string, id: number | string) {
+	return new Promise((resolve, reject) => {
+		let query: string = `DELETE FROM ${database} WHERE id = ?`
+		db.run(query, [id], (err: Error) => {
+			if (err) {reject(err); return;}
+			resolve(null)
+		})
+	})
 }
 
 export interface MediaRow {
