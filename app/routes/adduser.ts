@@ -4,7 +4,7 @@ import express from "express";
 import {db, createUser} from "../types/db";
 
 const router: Router = express.Router();
-
+/**Middleware to check if a user is actually signed in */
 const adminCheck: Middleware = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user)
     return res.status(403).send("You are not authorized to perform this action");

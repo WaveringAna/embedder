@@ -7,6 +7,7 @@ mkdirp.sync("./var/db");
 
 export const db = new sqlite3.Database("./var/db/media.db");
 
+/**Inserts a new user to the database */
 export function createUser(username: string, password: string) {
   let salt = crypto.randomBytes(16);
 
@@ -17,6 +18,7 @@ export function createUser(username: string, password: string) {
   ]);
 }
 
+/**Selects a path for a file given ID */
 export function getPath(id: number | string) {
   return new Promise((resolve, reject) => {
     let query: string = `SELECT path FROM media WHERE id = ?`;
@@ -28,6 +30,7 @@ export function getPath(id: number | string) {
   })
 }
 
+/**Deletes from database given an ID */
 export function deleteId(database: string, id: number | string) {
   return new Promise((resolve, reject) => {
     let query: string = `DELETE FROM ${database} WHERE id = ?`
@@ -39,6 +42,7 @@ export function deleteId(database: string, id: number | string) {
   })
 }
 
+/**Expires a database row given a Date in unix time */
 export function expire(database: string, column: string, expiration:number) {
   return new Promise((resolve, reject) => {
     let query: string = `SELECT * FROM ${database} WHERE ${column} < ?`;
@@ -51,12 +55,14 @@ export function expire(database: string, column: string, expiration:number) {
   })
 }
 
+/**A generic database row */
 export interface GenericRow {
   id? : number | string,
   username?: string
   expire? :Date
 }
 
+/**A row for the media database */
 export interface MediaRow {
   id? : number | string,
   path: string,
@@ -64,12 +70,14 @@ export interface MediaRow {
   username?: string
 }
 
+/**Params type for doing work with media database */
 export type MediaParams = [
   path: string,
   expire: Date,
   username?: string
 ]
 
+/**A row for the user database */
 export interface UserRow {
   id? : Number,
   username: string,

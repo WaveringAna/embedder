@@ -18,9 +18,10 @@ import {fileStorage, fileFilter} from "../types/multer";
 import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
 
 let upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
-
+/**Middleware to grab media from media database */
 const fetchMedia: Middleware = (req, res, next) => {
   let admin: boolean = req.user.username == "admin" ? true : false
+  /**Check if the user is an admin, if so, show all posts from all users */
   let query: string = admin == true ? "SELECT * FROM media" : `SELECT * FROM media WHERE username = '${req.user.username}'`;
 
   db.all(query, (err:Error, rows: []) => {

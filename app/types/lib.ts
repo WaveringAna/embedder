@@ -6,12 +6,12 @@ declare global {
     }
   }
 }
-
+/**Splits a file name into its name and then its extension */
 export function extension(str: string){
   let file = str.split("/").pop();
   return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }
-
+/**Type for user data */
 export interface User {
   username: string;
   id?: string;

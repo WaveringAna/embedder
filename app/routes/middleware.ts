@@ -20,6 +20,7 @@ export const checkAuth: Middleware = (req, res, next) => {
   next();
 }
 
+/**Checks shareX auth key */
 export const checkSharexAuth: Middleware = (req, res, next) => {
   let auth = process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
   let key = null;
@@ -40,6 +41,7 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
   next();
 }
 
+/**Creates oembed json file for embed metadata */
 export const createEmbedData: Middleware = (req, res, next) => {
   const files = req.files as Express.Multer.File[]
   for (let file in files) {
@@ -62,7 +64,7 @@ export const createEmbedData: Middleware = (req, res, next) => {
   }
   next();
 }
-
+/** Converts video to gif and vice versa using ffmpeg */
 export const convert: Middleware = (req, res, next)  => {
   const files = req.files as Express.Multer.File[]
   for (let file in files) {
@@ -100,7 +102,7 @@ export const convert: Middleware = (req, res, next)  => {
     }
   }
 }
-
+/**Middleware for handling uploaded files. Inserts it into the database */
 export const handleUpload: Middleware = (req, res, next) => {
   if (!req.file && !req.files) {
     console.log("No files were uploaded");
@@ -120,7 +122,7 @@ export const handleUpload: Middleware = (req, res, next) => {
 
   next();
 }
-
+/**Inserts into media database */
 function insertToDB (filename: string, expireDate: Date, username: string, next: NextFunction) {
   let params: MediaParams = [
     filename, 
