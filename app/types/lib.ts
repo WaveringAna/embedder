@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-export function extension(str: String){
+export function extension(str: string){
   let file = str.split("/").pop();
   return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }

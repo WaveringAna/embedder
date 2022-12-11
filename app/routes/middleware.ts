@@ -121,7 +121,7 @@ export const handleUpload: Middleware = (req, res, next) => {
   next();
 }
 
-function insertToDB (filename: String, expireDate: Date, username: String, next: NextFunction) {
+function insertToDB (filename: string, expireDate: Date, username: string, next: NextFunction) {
   let params: MediaParams = [
     filename, 
     expireDate, 

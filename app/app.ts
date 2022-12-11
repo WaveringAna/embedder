@@ -15,7 +15,7 @@ import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 
-import {db, createUser, MediaRow} from "./types/db";
+import {db, expire, createUser, MediaRow} from "./types/db";
 
 let app = express();
 let server = http.createServer(app);
@@ -130,7 +130,7 @@ app.use("/", adduserRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-function prune () {
+async function prune () {
   db.all("SELECT * FROM media", (err: Error, rows: []) => {
     console.log("Uploaded files: " + rows.length);
     console.log(rows);
@@ -139,30 +139,16 @@ function prune () {
   console.log("Vacuuming database...");
   db.run("VACUUM");
 
-  db.all("SELECT * FROM media WHERE expire < ?", [Date.now()], (err: Error, rows: []) => {
-    console.log("Expired rows: " + rows);
-    if (err) return console.error(err);
-    rows.forEach((row: MediaRow) => {
-      console.log(`Deleting ${row.path}`);
-      fs.unlink(`uploads/${row.path}`, (err) => {
-        if (err) {
-          if(err.errno == -4058) {
-            console.log("File already deleted");
-            db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
-              if (err) return console.error(err);
-            });
-          } else {
-            console.error(err);
-          }
-        } else {
-          db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
-            if (err) return console.error(err);
-          });
-        }
-      });
-      console.log(`Deleted ${row.path}`);
+  db.each("SELECT path FROM media WHERE expire < ?", [Date.now()], (err: Error, row: MediaRow) => {
+    console.log(`Expired row: ${row}`);
+    fs.unlink(`uploads/${row.path}`, (err) => {
+      if (err && err.errno == -4058) {
+        console.log("File already deleted");
+      }
     });
   });
+
+  await expire("media", "expire", Date.now());
 }
 
 setInterval(prune, 1000 * 60); //prune every minute
