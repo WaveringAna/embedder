@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface User {
@@ -8,7 +9,7 @@ declare global {
 }
 /**Splits a file name into its name and then its extension */
 export function extension(str: string){
-  let file = str.split("/").pop();
+  const file = str.split("/").pop();
   return [file.substr(0,file.lastIndexOf(".")),file.substr(file.lastIndexOf("."),file.length).toLowerCase()];
 }
 /**Type for user data */

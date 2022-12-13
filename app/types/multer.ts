@@ -1,8 +1,8 @@
-import {Request} from 'express';
-import multer, {FileFilterCallback} from 'multer';
+import {Request} from "express";
+import multer, {FileFilterCallback} from "multer";
 
-import {db, MediaRow} from './db'
-import {extension} from './lib'
+import {db, MediaRow} from "./db";
+import {extension} from "./lib";
 
 export type DestinationCallback = (error: Error | null, destination: string) => void
 export type FileNameCallback = (error: Error | null, filename: string) => void
@@ -20,15 +20,15 @@ export const fileStorage = multer.diskStorage({
     file: Express.Multer.File,
     callback: FileNameCallback
   ): void => {
-    let nameAndExtension = extension(file.originalname);
+    const nameAndExtension = extension(file.originalname);
     console.log(`Uploading ${file}`);
     db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]],  (err: Error, exists: []) => {
       if (err) {
-        console.log(err)
-        callback(err, null)
+        console.log(err);
+        callback(err, null);
       }
       if (exists.length != 0) {
-        let suffix = new Date().getTime() / 1000;
+        const suffix = new Date().getTime() / 1000;
 
         if (request.body.title == "" || request.body.title  == null || request.body.title == undefined) {
           callback(null, nameAndExtension[0] + "-" + suffix + nameAndExtension[1]);
@@ -46,27 +46,27 @@ export const fileStorage = multer.diskStorage({
   }
 });
 
-export let allowedMimeTypes = [
-	"image/png",
-	"image/jpg",
-	"image/jpeg",
-	"image/gif",
-	"image/webp",
-	"video/mp4",
-	"video/mov",
-	"video/webm",
-	"audio/mpeg",
-	"audio/ogg"
+export const allowedMimeTypes = [
+  "image/png",
+  "image/jpg",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "video/mp4",
+  "video/mov",
+  "video/webm",
+  "audio/mpeg",
+  "audio/ogg"
 ];
-
+  
 export const fileFilter = (
   request: Request,
   file: Express.Multer.File,
   callback: FileFilterCallback
 ): void => {
   if (allowedMimeTypes.includes(file.mimetype)) {
-      callback(null, true)
+    callback(null, true);
   } else {
-      callback(null, false)
+    callback(null, false);
   }
-}
+};

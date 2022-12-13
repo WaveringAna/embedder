@@ -3,10 +3,10 @@ import express from "express";
 import passport from "passport";
 import {Strategy as LocalStrategy} from "passport-local";
 
-import {User} from "../types/lib"
+import {User} from "../types/lib";
 import {db, UserRow} from "../types/db";
 
-let router = express.Router();
+const router = express.Router();
 
 passport.use(new LocalStrategy(function verify(username, password, cb) {
   db.get("SELECT * FROM users WHERE username = ?", [username], function(err: Error, row: UserRow) {

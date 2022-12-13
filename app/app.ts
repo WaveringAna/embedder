@@ -1,4 +1,4 @@
-require("dotenv").config();
+import "dotenv";
 
 import express from "express";
 import passport from "passport";
@@ -17,20 +17,18 @@ import adduserRouter from "./routes/adduser";
 
 import {db, expire, createUser, MediaRow} from "./types/db";
 
-let app = express();
-let server = http.createServer(app);
-let port = normalizePort(process.env.EBPORT || "3000");
+const app = express();
+const server = http.createServer(app);
+const port = normalizePort(process.env.EBPORT || "3000");
 
 function normalizePort(val: string) {
-  var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
   if (isNaN(port)) {
-    // named pipe
     return val;
   }
 
   if (port >= 0) {
-    // port number
     return port;
   }
 
@@ -47,7 +45,7 @@ function onError(error: any) {
     throw error;
   }
 
-  var bind = typeof port === "string"
+  const bind = typeof port === "string"
     ? "Pipe " + port
     : "Port " + port;
 
@@ -69,30 +67,33 @@ function onError(error: any) {
 db.serialize(function() {
   // create the database schema for the embedders app
   db.run("CREATE TABLE IF NOT EXISTS users ( \
-      id INTEGER PRIMARY KEY, \
-      username TEXT UNIQUE, \
-      hashed_password BLOB, \
-      salt BLOB \
-    )");
+    id INTEGER PRIMARY KEY, \
+    username TEXT UNIQUE, \
+    hashed_password BLOB, \
+    salt BLOB \
+  )");
 
   db.run("CREATE TABLE IF NOT EXISTS media ( \
-      id INTEGER PRIMARY KEY, \
-      path TEXT NOT NULL, \
-      expire INTEGER \, \
-      username TEXT \
-    )");
+    id INTEGER PRIMARY KEY, \
+    path TEXT NOT NULL, \
+    expire INTEGER, \
+    username TEXT \
+  )");
 
   db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
-    if(err)
-      return;
+    if(err) return;
   }); //TODO, version new DB, run this command when detecting old DB
+
+  db.run("ALTER TABLE users ADD COLUMN username TEXT", (err) => {
+    if (err) return;
+  });
   
   createUser("admin", process.env.EBPASS || "changeme");
 });
 
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === "string"
+  const addr = server.address();
+  const bind = typeof addr === "string"
     ? "pipe " + addr
     : "port " + addr.port;
   console.log("Listening on " + bind);
@@ -116,11 +117,10 @@ app.use(session({
   secret: process.env.EBSECRET || "pleasechangeme",
   resave: false,
   saveUninitialized: false,
-  // @ts-ignore
   store: new SQLiteStore({
     db: "sessions.db",
     dir: "./var/db"
-  })
+  }) as session.Store
 }));
 app.use(passport.authenticate("session"));
 

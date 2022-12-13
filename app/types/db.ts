@@ -9,7 +9,7 @@ export const db = new sqlite3.Database("./var/db/media.db");
 
 /**Inserts a new user to the database */
 export function createUser(username: string, password: string) {
-  let salt = crypto.randomBytes(16);
+  const salt = crypto.randomBytes(16);
 
   db.run("INSERT OR IGNORE INTO users (username, hashed_password, salt) VALUES (?, ?, ?)", [
     username,
@@ -21,38 +21,39 @@ export function createUser(username: string, password: string) {
 /**Selects a path for a file given ID */
 export function getPath(id: number | string) {
   return new Promise((resolve, reject) => {
-    let query: string = `SELECT path FROM media WHERE id = ?`;
+    const query = "SELECT path FROM media WHERE id = ?";
 
     db.get(query, [id], (err: Error, path: object) => {
-      if (err) {reject(err)}
-      resolve(path)
+      if (err) {reject(err);}
+      resolve(path);
     });
-  })
+  });
 }
 
 /**Deletes from database given an ID */
 export function deleteId(database: string, id: number | string) {
   return new Promise((resolve, reject) => {
-    let query: string = `DELETE FROM ${database} WHERE id = ?`
+    const query = `DELETE FROM ${database} WHERE id = ?`;
 
     db.run(query, [id], (err: Error) => {
       if (err) {reject(err); return;}
-      resolve(null)
-    })
-  })
+      resolve(null);
+    });
+  });
 }
 
 /**Expires a database row given a Date in unix time */
 export function expire(database: string, column: string, expiration:number) {
   return new Promise((resolve, reject) => {
-    let query: string = `SELECT * FROM ${database} WHERE ${column} < ?`;
+    const query = `SELECT * FROM ${database} WHERE ${column} < ?`;
 
     db.each(query, [expiration], async (err: Error, row: GenericRow) => {
-      await deleteId(database, row.id)
+      if (err) reject(err);
+      await deleteId(database, row.id);
 
       resolve(null);
     });
-  })
+  });
 }
 
 /**A generic database row */
@@ -79,7 +80,7 @@ export type MediaParams = [
 
 /**A row for the user database */
 export interface UserRow {
-  id? : Number,
+  id? : number,
   username: string,
   hashed_password: any,
   salt: any

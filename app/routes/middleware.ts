@@ -1,8 +1,7 @@
-import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from 'express';
+import type {RequestHandler as Middleware, NextFunction} from "express";
 
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegpath from "@ffmpeg-installer/ffmpeg";
-// @ts-ignore
 import ffprobepath from "@ffprobe-installer/ffprobe";
 ffmpeg.setFfmpegPath(ffmpegpath.path);
 ffmpeg.setFfprobePath(ffprobepath.path);
@@ -18,11 +17,11 @@ export const checkAuth: Middleware = (req, res, next) => {
     return res.status(401);
   }
   next();
-}
+};
 
 /**Checks shareX auth key */
 export const checkSharexAuth: Middleware = (req, res, next) => {
-  let auth = process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
+  const auth = process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
   let key = null;
   
   if (req.headers["key"]) {
@@ -35,18 +34,18 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
     return res.status(401).send("{success: false, message: '\"'Invalid key\", fix: \"Provide a valid key\"}");
   }
   
-  let shortKey = key.substr(0, 3) + "..."; 
+  const shortKey = key.substr(0, 3) + "..."; 
   console.log(`Authenicated user with key: ${shortKey}`);
   
   next();
-}
+};
 
 /**Creates oembed json file for embed metadata */
 export const createEmbedData: Middleware = (req, res, next) => {
-  const files = req.files as Express.Multer.File[]
-  for (let file in files) {
-    let nameAndExtension = extension(files[file].originalname);
-    let oembed = {
+  const files = req.files as Express.Multer.File[];
+  for (const file in files) {
+    const nameAndExtension = extension(files[file].originalname);
+    const oembed = {
       type: "video",
       version: "1.0",
       provider_name: "embedder",
@@ -63,12 +62,12 @@ export const createEmbedData: Middleware = (req, res, next) => {
     });
   }
   next();
-}
+};
 /** Converts video to gif and vice versa using ffmpeg */
 export const convert: Middleware = (req, res, next)  => {
-  const files = req.files as Express.Multer.File[]
-  for (let file in files) {
-    let nameAndExtension = extension(files[file].originalname);
+  const files = req.files as Express.Multer.File[];
+  for (const file in files) {
+    const nameAndExtension = extension(files[file].originalname);
     if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".mkv" || nameAndExtension[1] == ".avi" || nameAndExtension[1] == ".mov") {
       console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
       ffmpeg()
@@ -101,7 +100,7 @@ export const convert: Middleware = (req, res, next)  => {
         .run();
     }
   }
-}
+};
 /**Middleware for handling uploaded files. Inserts it into the database */
 export const handleUpload: Middleware = (req, res, next) => {
   if (!req.file && !req.files) {
@@ -110,25 +109,25 @@ export const handleUpload: Middleware = (req, res, next) => {
   }
   
   const files = (req.files) ? req.files as Express.Multer.File[] : req.file; //Check if a single file was uploaded or multiple
-  const username = (req.user) ? req.user.username : "sharex"                 //if no username was provided, we can presume that it is sharex
+  const username = (req.user) ? req.user.username : "sharex";                //if no username was provided, we can presume that it is sharex
   const expireDate: Date = (req.body.expire) ? new Date(Date.now() + (req.body.expire * 24 * 60 * 60 * 1000)) : null;
 
   if (files instanceof Array) {
-    for (let file in files) {
+    for (const file in files) {
       insertToDB(files[file].filename, expireDate, username, next);
     }
   } else
     insertToDB(files.filename, expireDate, username, next);
 
   next();
-}
+};
 /**Inserts into media database */
 function insertToDB (filename: string, expireDate: Date, username: string, next: NextFunction) {
-  let params: MediaParams = [
+  const params: MediaParams = [
     filename, 
     expireDate, 
     username
-   ]
+  ];
   
   db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", params, function (err) {
     if (err) { 
