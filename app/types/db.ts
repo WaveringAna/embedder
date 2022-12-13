@@ -7,15 +7,59 @@ mkdirp.sync("./var/db");
 
 export const db = new sqlite3.Database("./var/db/media.db");
 
+export function createDatabase(version: number){
+  // create the database schema for the embedders app
+  console.log("Creating database");
+
+  db.run("CREATE TABLE IF NOT EXISTS users ( \
+    id INTEGER PRIMARY KEY, \
+    username TEXT UNIQUE, \
+    hashed_password BLOB, \
+    expire INTEGER, \
+    salt BLOB \
+  )", () => createUser("admin", process.env.EBPASS || "changeme"));
+
+  db.run("CREATE TABLE IF NOT EXISTS media ( \
+    id INTEGER PRIMARY KEY, \
+    path TEXT NOT NULL, \
+    expire INTEGER, \
+    username TEXT \
+  )");
+
+  db.run(`PRAGMA user_version = ${version}`);
+}
+
+/**Updates old Database schema to new */
+export function updateDatabase(oldVersion: number, newVersion: number){
+  if (oldVersion == 1) {
+    console.log(`Updating database from ${oldVersion} to ${newVersion}`);
+    db.run("PRAGMA user_version = 2", (err) => {
+      if(err) return;
+    });
+    db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
+      if(err) return;
+    });
+  
+    db.run("ALTER TABLE users ADD COLUMN expire TEXT", (err) => {
+      if(err) return;
+    });
+  }
+}
+
 /**Inserts a new user to the database */
 export function createUser(username: string, password: string) {
-  const salt = crypto.randomBytes(16);
+  return new Promise((resolve, reject) => {
+    console.log(`Creating user ${username}`);
+    const salt = crypto.randomBytes(16);
+  
+    db.run("INSERT OR IGNORE INTO users (username, hashed_password, salt) VALUES (?, ?, ?)", [
+      username,
+      crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256"),
+      salt
+    ]);
 
-  db.run("INSERT OR IGNORE INTO users (username, hashed_password, salt) VALUES (?, ?, ?)", [
-    username,
-    crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256"),
-    salt
-  ]);
+    resolve(null);
+  });
 }
 
 /**Selects a path for a file given ID */
