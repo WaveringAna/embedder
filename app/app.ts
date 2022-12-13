@@ -1,3 +1,5 @@
+const version = 1.9;
+
 import "dotenv";
 
 import express from "express";
@@ -65,11 +67,37 @@ function onError(error: any) {
 }
 
 db.serialize(function() {
+  // Check if there is an existing DB or not
+  // Check if the database is empty
+  db.get("SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'", function(err, row) {
+    if (row.count === 0) createDatabase;
+  });
+
+  //Update old databases, Current version is 2
+  db.get("PRAGMA user_version", (err: Error, row: any) => {
+    if (row && row.user_version) {
+      const version = row.user_version;
+      if (version != 2) console.log("DATABASE IS OUTDATED");
+      //updateDatabase();
+    } else {
+      //Old database is version 1 without username support for images and expire support for users
+      //Because ver 1 does not have user_version set, we can safely assume that it is ver 1
+      updateDatabase(1, 2);
+    }
+  });
+  
+  createUser("admin", process.env.EBPASS || "changeme");
+});
+
+function createDatabase(version: number){
   // create the database schema for the embedders app
+  console.log("Creating database");
+
   db.run("CREATE TABLE IF NOT EXISTS users ( \
     id INTEGER PRIMARY KEY, \
     username TEXT UNIQUE, \
     hashed_password BLOB, \
+    expire INTEGER, \
     salt BLOB \
   )");
 
@@ -80,22 +108,32 @@ db.serialize(function() {
     username TEXT \
   )");
 
-  db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
-    if(err) return;
-  }); //TODO, version new DB, run this command when detecting old DB
+  db.run(`PRAGMA user_version = ${version}`);
+}
 
-  db.run("ALTER TABLE users ADD COLUMN username TEXT", (err) => {
-    if (err) return;
-  });
+/**Updates old Database schema to new */
+function updateDatabase(oldVersion: number, newVersion: number){
+  if (oldVersion == 1) {
+    console.log(`Updating database from ${oldVersion} to ${newVersion}`);
+    db.run("PRAGMA user_version = 2", (err) => {
+      if(err) return;
+    });
+    db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
+      if(err) return;
+    });
   
-  createUser("admin", process.env.EBPASS || "changeme");
-});
+    db.run("ALTER TABLE users ADD COLUMN expire TEXT", (err) => {
+      if(err) return;
+    });
+  }
+}
 
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === "string"
     ? "pipe " + addr
     : "port " + addr.port;
+  console.log("Embedder version: " + version);
   console.log("Listening on " + bind);
 }
 
