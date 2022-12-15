@@ -1,6 +1,6 @@
-import type {MediaRow, UserRow} from './types';
+const version = 1.9;
 
-require("dotenv").config();
+import "dotenv";
 
 import express from "express";
 import passport from "passport";
@@ -15,28 +15,26 @@ import path from "path";
 
 import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
+import adduserRouter from "./routes/adduser";
 
-import {createUser} from "./db";
-import db from "./db"
+import {db, expire, createDatabase, updateDatabase, MediaRow} from "./types/db";
 
-let app = express();
-let server = http.createServer(app);
-let port = normalizePort(process.env.EBPORT || "3000");
+const app = express();
+const server = http.createServer(app);
+const port = normalizePort(process.env.EBPORT || "3000");
 
 function normalizePort(val: string) {
-	var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
-	if (isNaN(port)) {
-		// named pipe
-		return val;
-	}
+  if (isNaN(port)) {
+    return val;
+  }
 
-	if (port >= 0) {
-		// port number
-		return port;
-	}
+  if (port >= 0) {
+    return port;
+  }
 
-	return false;
+  return false;
 }
 
 app.set("port", port);
@@ -45,53 +43,57 @@ server.on("error", onError);
 server.on("listening", onListening);
 
 function onError(error: any) {
-	if (error.syscall !== "listen") {
-		throw error;
-	}
+  if (error.syscall !== "listen") {
+    throw error;
+  }
 
-	var bind = typeof port === "string"
-		? "Pipe " + port
-		: "Port " + port;
+  const bind = typeof port === "string"
+    ? "Pipe " + port
+    : "Port " + port;
 
-	// handle specific listen errors with friendly messages
-	switch (error.code) {
-	case "EACCES":
-		console.error(bind + " requires elevated privileges");
-		process.exit(1);
-		break;
-	case "EADDRINUSE":
-		console.error(bind + " is already in use");
-		process.exit(1);
-		break;
-	default:
-		throw error;
-	}
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+  case "EACCES":
+    console.error(bind + " requires elevated privileges");
+    process.exit(1);
+    break;
+  case "EADDRINUSE":
+    console.error(bind + " is already in use");
+    process.exit(1);
+    break;
+  default:
+    throw error;
+  }
 }
 
-db.serialize(function() {
-	// create the database schema for the embedders app
-	db.run("CREATE TABLE IF NOT EXISTS users ( \
-    	id INTEGER PRIMARY KEY, \
-    	username TEXT UNIQUE, \
-    	hashed_password BLOB, \
-    	salt BLOB \
-  	)");
 
-	db.run("CREATE TABLE IF NOT EXISTS media ( \
-    	id INTEGER PRIMARY KEY, \
-    	path TEXT NOT NULL, \
-    	expire INTEGER \
-  	)");
-  
-	createUser("admin", process.env.EBPASS || "changeme");
+// Check if there is an existing DB or not, then check if it needs to be updated to new schema
+db.get("SELECT * FROM sqlite_master WHERE name ='users' and type='table'", async (err, row) => {
+  if (!row) createDatabase(2); 
+  else checkVersion();
 });
 
+function checkVersion () {
+  db.get("PRAGMA user_version", (err: Error, row: any) => {
+    if (row && row.user_version) {
+      const version = row.user_version;
+      if (version != 2) console.log("DATABASE IS OUTDATED");
+      //no future releases yet, and else statement handles version 1
+      //updateDatabase(version, 2);
+    } else {
+      // Because ver 1 does not have user_version set, we can safely assume that it is ver 1
+      updateDatabase(1, 2);
+    }
+  });
+}
+
 function onListening() {
-	var addr = server.address();
-	var bind = typeof addr === "string"
-		? "pipe " + addr
-		: "port " + addr.port;
-	console.log("Listening on " + bind);
+  const addr = server.address();
+  const bind = typeof addr === "string"
+    ? "pipe " + addr
+    : "port " + addr.port;
+  console.log("Embedder version: " + version);
+  console.log("Listening on " + bind);
 }
 
 app.enable("trust proxy");
@@ -102,62 +104,48 @@ app.set("view engine", "ejs");
 
 app.use(express.json());
 app.use(express.urlencoded({
-	extended: false
+  extended: false
 }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(session({
-	secret: process.env.EBSECRET || "pleasechangeme",
-	resave: false,
-	saveUninitialized: false,
-	// @ts-ignore
-	store: new SQLiteStore({
-		db: "sessions.db",
-		dir: "./var/db"
-	})
+  secret: process.env.EBSECRET || "pleasechangeme",
+  resave: false,
+  saveUninitialized: false,
+  store: new SQLiteStore({
+    db: "sessions.db",
+    dir: "./var/db"
+  }) as session.Store
 }));
 app.use(passport.authenticate("session"));
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
+app.use("/", adduserRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-function prune () {
-	db.all("SELECT * FROM media", (err: Error, rows: []) => {
-		console.log("Uploaded files: " + rows.length);
-		console.log(rows);
-	});
+async function prune () {
+  db.all("SELECT * FROM media", (err: Error, rows: []) => {
+    console.log("Uploaded files: " + rows.length);
+    console.log(rows);
+  });
 
-	console.log("Vacuuming database...");
-	db.run("VACUUM");
+  console.log("Vacuuming database...");
+  db.run("VACUUM");
 
-	db.all("SELECT * FROM media WHERE expire < ?", [Date.now()], (err: Error, rows: []) => {
-		console.log("Expired rows: " + rows);
-		if (err) return console.error(err);
-		rows.forEach((row: MediaRow) => {
-			console.log(`Deleting ${row.path}`);
-			fs.unlink(`uploads/${row.path}`, (err) => {
-				if (err) {
-					if(err.errno == -4058) {
-						console.log("File already deleted");
-						db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
-							if (err) return console.error(err);
-						});
-					} else {
-						console.error(err);
-					}
-				} else {
-					db.all("DELETE FROM media WHERE path = ?", [row.path], (err: Error) => {
-						if (err) return console.error(err);
-					});
-				}
-			});
-			console.log(`Deleted ${row.path}`);
-		});
-	});
+  db.each("SELECT path FROM media WHERE expire < ?", [Date.now()], (err: Error, row: MediaRow) => {
+    console.log(`Expired row: ${row}`);
+    fs.unlink(`uploads/${row.path}`, (err) => {
+      if (err && err.errno == -4058) {
+        console.log("File already deleted");
+      }
+    });
+  });
+
+  await expire("media", "expire", Date.now());
 }
 
 setInterval(prune, 1000 * 60); //prune every minute
