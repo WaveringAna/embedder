@@ -18,7 +18,6 @@ import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 
 import {db, expire, createDatabase, updateDatabase, MediaRow} from "./types/db";
-import e from "express";
 
 const app = express();
 const server = http.createServer(app);
@@ -68,21 +67,21 @@ function onError(error: any) {
 }
 
 
-// Check if there is an existing DB or not
-// Old database is version 1 without username support for images and expire support for users
-// Because ver 1 does not have user_version set, we can safely assume that it is ver 1
+// Check if there is an existing DB or not, then check if it needs to be updated to new schema
 db.get("SELECT * FROM sqlite_master WHERE name ='users' and type='table'", async (err, row) => {
   if (!row) createDatabase(2); 
-  else updateDBfrom1to2();
+  else checkVersion();
 });
 
-function updateDBfrom1to2 () {
+function checkVersion () {
   db.get("PRAGMA user_version", (err: Error, row: any) => {
     if (row && row.user_version) {
       const version = row.user_version;
       if (version != 2) console.log("DATABASE IS OUTDATED");
-      //updateDatabase();
+      //no future releases yet, and else statement handles version 1
+      //updateDatabase(version, 2);
     } else {
+      // Because ver 1 does not have user_version set, we can safely assume that it is ver 1
       updateDatabase(1, 2);
     }
   });
