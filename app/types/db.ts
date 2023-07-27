@@ -46,6 +46,19 @@ export function updateDatabase(oldVersion: number, newVersion: number){
   }
 }
 
+/**Searches the database and returns images with partial or exact keysearches */
+export function searchImages(imagename: string, partial: boolean) {
+  return new Promise((resolve, reject) => {
+    console.log(`searching for ${imagename}`);
+  });
+}
+
+export function updateImageName(oldimagename: string, newname:string) {
+  return new Promise((resolve, reject) => {
+    console.log(`updating ${oldimagename} to ${newname}`);
+  });
+}
+
 /**Inserts a new user to the database */
 export function createUser(username: string, password: string) {
   return new Promise((resolve, reject) => {

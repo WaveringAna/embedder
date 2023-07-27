@@ -41,6 +41,24 @@ body {
 	display: none;
 }
 
+@keyframes slideaway {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(40px); opacity: 0; }
+}
+
+.hide {
+    animation: slideaway 200ms forwards;
+}
+
+@keyframes slideback {
+    0% { transform: translateY(40px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.show {
+    animation: slideback 200ms forwards;
+}
+
 .embedderapp {
 	background: #121212;
 	margin: 130px 0 40px 0;
@@ -99,7 +117,7 @@ body {
 }
 
 .new-embedder {
-	padding: 16px 16px 16px 60px;
+	padding: 16px 16px 16px 16px;
 	height: 65px;
 	border: none;
 	background: rgba(0, 0, 0, 0.003);
@@ -212,7 +230,7 @@ body {
 
 .embedder-list li label {
 	word-break: break-all;
-	padding: 15px 15px 15px 60px;
+	padding: 15px 15px 15px 15px;
 	display: block;
 	line-height: 1.2;
 	transition: color 0.4s;
