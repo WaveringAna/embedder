@@ -9,8 +9,8 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 import fs from "fs";
 import process from "process";
 
-import {extension} from "../types/lib";
-import {db, MediaParams} from "../types/db";
+import {extension, videoExtensions, imageExtensions} from "./lib";
+import {db, MediaParams} from "./db";
 
 export const checkAuth: Middleware = (req, res, next) => {
   if (!req.user) {
@@ -63,26 +63,33 @@ export const createEmbedData: Middleware = (req, res, next) => {
   }
   next();
 };
+
 /** Converts video to gif and vice versa using ffmpeg */
 export const convert: Middleware = (req, res, next)  => {
   const files = req.files as Express.Multer.File[];
+
   for (const file in files) {
     const nameAndExtension = extension(files[file].originalname);
-    if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".mkv" || nameAndExtension[1] == ".avi" || nameAndExtension[1] == ".mov") {
+
+    if (videoExtensions.includes(nameAndExtension[1])) {
       console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
+
+      const startTime = Date.now();
       ffmpeg()
         .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
         .inputFormat(nameAndExtension[1].substring(1))
         .outputFormat("gif")
         .output(`uploads/${nameAndExtension[0]}.gif`)
         .on("end", function() {
-          console.log("Conversion complete");
+          console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
           console.log(`Uploaded to uploads/${nameAndExtension[0]}.gif`);
         })
         .on("error", (e) => console.log(e))
         .run();
     } else if (nameAndExtension[1] == ".gif") {
       console.log(`Converting ${nameAndExtension[0]}${nameAndExtension[1]} to mp4`);
+
+      const startTime = Date.now();
       ffmpeg(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
         .inputFormat("gif")
         .outputFormat("mp4")
@@ -94,13 +101,50 @@ export const convert: Middleware = (req, res, next)  => {
         .noAudio()
         .output(`uploads/${nameAndExtension[0]}.mp4`)
         .on("end", function() {
-          console.log("Conversion complete");
+          console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
           console.log(`Uploaded to uploads/${nameAndExtension[0]}.mp4`);
+          next();
         })
         .run();
     }
   }
 };
+
+/**Creates a 720p copy of video for smaller file */
+export const convertTo720p: Middleware = (req, res, next) => {
+  const files = req.files as Express.Multer.File[];
+  console.log("convert to 720p running");
+  for (const file in files) {
+    const nameAndExtension = extension(files[file].originalname);
+
+    //Skip if not a video
+    if (!videoExtensions.includes(nameAndExtension[1]) && nameAndExtension[1] !== ".gif") {
+      console.log(`${files[file].originalname} is not a video file`);
+      console.log(nameAndExtension[1]);
+      continue;
+    }
+
+    console.log(`Creating 720p for ${files[file].originalname}`);
+
+    const startTime = Date.now();
+
+    ffmpeg()
+      .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
+      .inputFormat(nameAndExtension[1].substring(1))
+      .outputOptions("-vf", "scale=-1:720")
+      .output(`uploads/720p-${nameAndExtension[0]}${nameAndExtension[1]}`)
+      .on("end", function() {
+        console.log(`720p copy complete, took ${Date.now() - startTime} to complete`);
+        console.log(`Uploaded to uploads/720p-${nameAndExtension[0]}${nameAndExtension[1]}`);
+        next();
+      })
+      .on("error", (e) => console.log(e))
+      .run();
+  }
+
+  next();
+};
+
 /**Middleware for handling uploaded files. Inserts it into the database */
 export const handleUpload: Middleware = (req, res, next) => {
   if (!req.file && !req.files) {
@@ -121,6 +165,7 @@ export const handleUpload: Middleware = (req, res, next) => {
 
   next();
 };
+
 /**Inserts into media database */
 function insertToDB (filename: string, expireDate: Date, username: string, next: NextFunction) {
   const params: MediaParams = [

@@ -17,3 +17,6 @@ export interface User {
   username: string;
   id?: string;
 }
+
+export const videoExtensions = [".mp4", ".mov", ".avi", ".flv", ".mkv", ".wmv", ".webm"];
+export const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".tiff", ".webp"];

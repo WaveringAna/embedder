@@ -15,7 +15,10 @@
          function extension(string) {
          return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
          }
-         %>
+
+         const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'];
+         const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp'];
+      %>
    </head>
    <body>
       <section class="embedderapp">
@@ -69,10 +72,10 @@
                <li id="<%= file.path %>" class="show">
                   <form action="<%= file.url %>" method="post">
                      <div class="view">
-                        <% if (extension(file.path) == ".mp4" || extension(file.path) == ".mov" || extension(file.path) == "webp") { %>
+                        <% if (videoExtensions.includes(extension(file.path))) { %>
                         <div class="video">
                            <video class="image" autoplay loop muted playsinline loading="lazy">
-                              <source src="/uploads/<%= file.path %>" loading="lazy">
+                              <source src="/uploads/720p-<%= file.path %>" loading="lazy">
                            </video>
                            <div class="overlay">
                               <% if(user.username == "admin" && file.username != "admin") { %>
@@ -84,7 +87,7 @@
                         </div>
                         <% } else if (extension(file.path) == ".gif") { %>
                         <div class="video">
-                           <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event);" loading="lazy">
+                           <img class="image" src="/uploads/720p-<%=file.path %>" width="100%" onclick="copyURI(event);" loading="lazy">
                            <div class="overlay">
                               <% if(user.username == "admin" && file.username != "admin") { %>
                               <small class="username"><%= file.username %></small>
@@ -93,7 +96,7 @@
                               <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
                            </div>
                         </div>
-                        <% } else if (extension(file.path) == ".jpg" || extension(file.path) == ".jpeg" || extension(file.path) == ".png" || extension(file.path) == ".gif" || extension(file.path) == ".webp" ) { %>
+                        <% } else if (imageExtensions.includes(extension(file.path))) { %>
                         <div class="video">
                            <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)" loading="lazy">
                            <% if(user.username == "admin" && file.username != "admin") { %>

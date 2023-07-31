@@ -11,10 +11,10 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 
 import fs from "fs";
 
-import {extension} from "../types/lib";
+import {extension, videoExtensions} from "../types/lib";
 import {db, MediaRow, getPath, deleteId} from "../types/db";
 import {fileStorage} from "../types/multer";
-import {checkAuth, checkSharexAuth, createEmbedData, handleUpload} from "./middleware";
+import {checkAuth, checkSharexAuth, convertTo720p, createEmbedData, handleUpload} from "../types/middleware";
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 /**Middleware to grab media from media database */
@@ -72,7 +72,7 @@ router.get("/gifv/:file", async (req: Request, res: Response, next: NextFunction
   } 
 });
 
-router.post("/", [checkAuth, upload.array("fileupload"), createEmbedData, handleUpload], (req: Request, res: Response) => {
+router.post("/", [checkAuth, upload.array("fileupload"), convertTo720p, createEmbedData, handleUpload], (req: Request, res: Response) => {
   res.redirect("/");
 });
 
@@ -82,16 +82,26 @@ router.post("/sharex", [checkSharexAuth, upload.single("fileupload"), createEmbe
 
 router.post("/:id(\\d+)/delete", [checkAuth], async (req: Request, res: Response) => {
   const path: any = await getPath(req.params.id);
-  fs.unlink(`uploads/${path.path}`, async (err) => {
-    if (err && err.errno == -4058) {
-      await deleteId("media", req.params.id).then(()=> {
-        return res.redirect("/");
-      });
-    }
-    await deleteId("media", req.params.id).then(()=> {
-      return res.redirect("/");
+
+  const nameAndExtension = extension(path.path);
+
+  const filesToDelete = [path.path, "oembed-" + path.path + ".json"];
+
+  if (videoExtensions.includes(nameAndExtension[1]) || nameAndExtension[1] == ".gif") {
+    filesToDelete.push("720p-" + path.path);
+  } 
+
+  filesToDelete.forEach(path => {
+    fs.unlink(path, async (err) => {
+      console.log(`Deleting ${path}`);
+      if (err && err.errno == -4058) {
+        await deleteId("media", req.params.id);
+      }
+      await deleteId("media", req.params.id);
     });
   });
+
+  return res.redirect("/");
 });
 
 export default router;
