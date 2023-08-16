@@ -131,7 +131,7 @@ export const convertTo720p: Middleware = (req, res, next) => {
     ffmpeg()
       .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
       .inputFormat(nameAndExtension[1].substring(1))
-      .outputOptions("-vf", "scale=-1:720")
+      .outputOptions("-vf", "scale=-2:720")
       .output(`uploads/720p-${nameAndExtension[0]}${nameAndExtension[1]}`)
       .on("end", function() {
         console.log(`720p copy complete, took ${Date.now() - startTime} to complete`);
