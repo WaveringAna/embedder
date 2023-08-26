@@ -1,32 +1,37 @@
-# Embedder
+# Embedder 🖼️
 
-A media host specialized in good looking embeds for services like Discord. No file size limits. No compression.
+A media host specialized in producing visually appealing embeds for services like Discord. Enjoy limitless file sizes and no compression. 
 
-<img src="readmegif.gif">
+![Embedder Demo](documentation/readmegif.gif)
 
-Upcoming Features: 
-* Guest user accounts
-* MariaDB/SQL support (uses sqlite for now)
+## 🚀 Upcoming Features
 
-Potential:
-* IPFS
+- 📊 MariaDB/SQL support (currently uses SQLite)
+- 🔗 Redundancy & Sync: Enhance reliability and enable synchronization across nodes.
 
-## Run
+## 🌐 Potential Features
 
-Source:
-```Bash
+- 🛰️ IPFS Integration
+
+## 🔧 How to Run
+
+### Using Source
+
+```bash
 $ export EBPASS=changeme
 $ export EBPORT=3000
-$ export EBAPI_KEY=changeme #ShareX support
+$ export EBAPI_KEY=changeme # For ShareX support
 
 $ npm install
 $ npm start
 ```
-Default username is admin with the password being whatever EBPASS is
+**Note**: Default username is `admin` with the password being whatever `EBPASS` is set to.
 
-ShareX support is enabled at "/upload", requires auth with key, expire key is in days 
-JSON
-```
+### ShareX Support
+
+Enabled at `/upload`. Requires authentication with key. `expire` key specifies duration in days.
+
+```json
 {
     "Version": "14.1.0",
     "Name": "embedder",
@@ -49,13 +54,15 @@ JSON
 }
 ```
 
-Docker Config
-```
+### Using Docker
+
+```bash
 docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.7.2
 ```
 
-Docker Compose
-```
+### Docker Compose
+
+```yaml
 version: '3.3'
 services:
     embedder:
@@ -68,9 +75,9 @@ services:
         volumes:
             - ./db:/var/db
             - ./uploads:/uploads
-        image: ghcr.io/waveringana/embedder:1.7.2
+        image: ghcr.io/waveringana/embedder:1.9.1
 ```
 
-## License
+## 📜 License
 
-[The Unlicense](https://opensource.org/licenses/unlicense)
+Distributed under [The Unlicense](https://opensource.org/licenses/unlicense).

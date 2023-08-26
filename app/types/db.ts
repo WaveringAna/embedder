@@ -7,8 +7,8 @@ mkdirp.sync("./var/db");
 
 export const db = new sqlite3.Database("./var/db/media.db");
 
+/**Create the database schema for the embedders app*/
 export function createDatabase(version: number){
-  // create the database schema for the embedders app
   console.log("Creating database");
 
   db.run("CREATE TABLE IF NOT EXISTS users ( \
@@ -46,6 +46,27 @@ export function updateDatabase(oldVersion: number, newVersion: number){
   }
 }
 
+/**Inserts into the media table */
+export function insertToDB (filename: string, expireDate: Date, username: string) {
+  const params: MediaParams = [
+    filename, 
+    expireDate, 
+    username
+  ];
+  
+  db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", params, function (err) {
+    if (err) { 
+      console.log(err);
+      return err;
+    }
+    console.log(`Uploaded ${filename} to database`);
+    if (expireDate == null)
+      console.log("It will not expire");
+    else if (expireDate != null || expireDate != undefined)
+      console.log(`It will expire on ${expireDate}`);
+  });
+}
+
 /**Searches the database and returns images with partial or exact keysearches */
 export function searchImages(imagename: string, partial: boolean) {
   return new Promise((resolve, reject) => {
@@ -75,7 +96,7 @@ export function createUser(username: string, password: string) {
   });
 }
 
-/**Selects a path for a file given ID */
+/**Selects the path for a file given ID */
 export function getPath(id: number | string) {
   return new Promise((resolve, reject) => {
     const query = "SELECT path FROM media WHERE id = ?";

@@ -10,7 +10,7 @@ import fs from "fs";
 import process from "process";
 
 import {extension, videoExtensions, imageExtensions} from "./lib";
-import {db, MediaParams} from "./db";
+import {db, MediaParams, insertToDB} from "./db";
 
 export const checkAuth: Middleware = (req, res, next) => {
   if (!req.user) {
@@ -158,31 +158,10 @@ export const handleUpload: Middleware = (req, res, next) => {
 
   if (files instanceof Array) {
     for (const file in files) {
-      insertToDB(files[file].filename, expireDate, username, next);
+      insertToDB(files[file].filename, expireDate, username);
     }
   } else
-    insertToDB(files.filename, expireDate, username, next);
+    insertToDB(files.filename, expireDate, username);
 
   next();
 };
-
-/**Inserts into media database */
-function insertToDB (filename: string, expireDate: Date, username: string, next: NextFunction) {
-  const params: MediaParams = [
-    filename, 
-    expireDate, 
-    username
-  ];
-  
-  db.run("INSERT INTO media (path, expire, username) VALUES (?, ?, ?)", params, function (err) {
-    if (err) { 
-      console.log(err);
-      return next(err);
-    }
-    console.log(`Uploaded ${filename} to database`);
-    if (expireDate == null)
-      console.log("It will not expire");
-    else if (expireDate != null || expireDate != undefined)
-      console.log(`It will expire on ${expireDate}`);
-  });
-}
