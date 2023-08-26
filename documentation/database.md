@@ -57,7 +57,7 @@ Embedder utilizes **SQLite3** to manage its user system and store metadata for u
 
 ---
 
-## Database Interactions (`lib/db.ts`)
+## Database Interactions (`types/db.ts`)
 
 ### `createDatabase(version: number)`
 
