@@ -2,8 +2,10 @@
 declare global {
   namespace Express {
     interface User {
-      username: string;
-      id?: string;
+      id? : number | string,
+      username: string,
+      hashed_password?: any,
+      salt?: any
     }
   }
 }
@@ -14,8 +16,10 @@ export function extension(str: string){
 }
 /**Type for user data */
 export interface User {
-  username: string;
-  id?: string;
+  id? : number | string,
+  username: string,
+  hashed_password?: any,
+  salt?: any
 }
 
 export const videoExtensions = [".mp4", ".mov", ".avi", ".flv", ".mkv", ".wmv", ".webm"];

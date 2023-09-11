@@ -126,7 +126,7 @@ function uploadFile(file) {
       location.reload();
     }
     else if (xhr.readyState == 4 && xhr.status != 200) {
-      // Error. Inform the user
+      alert(`Upload failed, error code: ${xhr.status}`)
     }
   });
 

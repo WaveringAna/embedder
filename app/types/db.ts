@@ -158,7 +158,7 @@ export type MediaParams = [
 
 /**A row for the user database */
 export interface UserRow {
-  id? : number,
+  id? : number | string,
   username: string,
   hashed_password: any,
   salt: any
