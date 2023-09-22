@@ -12,12 +12,13 @@ const SQLiteStore = sqlite3(session);
 import fs from "fs";
 import http from "http";
 import path from "path";
+import { unlink } from 'fs/promises';
 
 import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 
-import {db, expire, createDatabase, updateDatabase, MediaRow} from "./types/db";
+import {db, expire, createDatabase, updateDatabase, MediaRow, UserRow} from "./types/db";
 
 const app = express();
 const server = http.createServer(app);
@@ -68,24 +69,30 @@ function onError(error: any) {
 
 
 // Check if there is an existing DB or not, then check if it needs to be updated to new schema
-db.get("SELECT * FROM sqlite_master WHERE name ='users' and type='table'", async (err, row) => {
-  if (!row) createDatabase(2); 
-  else checkVersion();
-});
+const row = db.prepare("SELECT * FROM sqlite_master WHERE name ='users' and type='table'").get();
 
-function checkVersion () {
-  db.get("PRAGMA user_version", (err: Error, row: any) => {
-    if (row && row.user_version) {
+if (!row) {
+    createDatabase(2);
+} else {
+    checkVersion();
+}
+
+
+function checkVersion() {
+  // Using the synchronous API of better-sqlite3
+  const row = db.prepare("PRAGMA user_version").get() as UserRow;
+
+  if (row && row.user_version) {
       const version = row.user_version;
       if (version != 2) console.log("DATABASE IS OUTDATED");
       //no future releases yet, and else statement handles version 1
       //updateDatabase(version, 2);
-    } else {
+  } else {
       // Because ver 1 does not have user_version set, we can safely assume that it is ver 1
       updateDatabase(1, 2);
-    }
-  });
+  }
 }
+
 
 function onListening() {
   const addr = server.address();
@@ -127,25 +134,38 @@ app.use("/", adduserRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-async function prune () {
-  db.all("SELECT * FROM media", (err: Error, rows: []) => {
-    console.log("Uploaded files: " + rows.length);
-    console.log(rows);
-  });
+async function prune() {
+    try {
+        // Fetching all media entries
+        const rows = db.prepare("SELECT * FROM media").all() as MediaRow[];
+        console.log("Uploaded files: " + rows.length);
+        console.log(rows);
 
-  console.log("Vacuuming database...");
-  db.run("VACUUM");
+        // Vacuuming the database
+        console.log("Vacuuming database...");
+        db.prepare("VACUUM").run();
 
-  db.each("SELECT path FROM media WHERE expire < ?", [Date.now()], (err: Error, row: MediaRow) => {
-    console.log(`Expired row: ${row}`);
-    fs.unlink(`uploads/${row.path}`, (err) => {
-      if (err && err.errno == -4058) {
-        console.log("File already deleted");
-      }
-    });
-  });
+        // Deleting expired media files
+        const expiredRows= db.prepare("SELECT path FROM media WHERE expire < ?").all(Date.now()) as MediaRow[];
 
-  await expire("media", "expire", Date.now());
+        for (const row of expiredRows) {
+            console.log(`Expired row: ${row}`);
+            try {
+                await unlink(`uploads/${row.path}`);
+            } catch (err: any) {
+                if (err && err.code === 'ENOENT') {
+                    console.log("File already deleted");
+                } else {
+                    console.error(`Failed to delete file: ${row.path}`, err);
+                }
+            }
+        }
+
+        await expire("media", "expire", Date.now());
+
+    } catch (err) {
+        console.error("Error in prune function:", err);
+    }
 }
 
 setInterval(prune, 1000 * 60); //prune every minute

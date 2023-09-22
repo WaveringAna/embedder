@@ -17,13 +17,32 @@ import {fileStorage} from "../types/multer";
 import {checkAuth, checkSharexAuth, convertTo720p, createEmbedData, handleUpload} from "../types/middleware";
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
+
 /**Middleware to grab media from media database */
 const fetchMedia: Middleware = (req, res, next) => {
-  const admin: boolean = req.user.username == "admin" ? true : false;
-  /**Check if the user is an admin, if so, show all posts from all users */
-  const query: string = admin == true ? "SELECT * FROM media" : `SELECT * FROM media WHERE username = '${req.user.username}'`;
+  try {
+    const admin: boolean = req.user.username == "admin" ? true : false;
+    /**Check if the user is an admin, if so, show all posts from all users */
+    const query: string = admin ? "SELECT * FROM media" : `SELECT * FROM media WHERE username = ?`;
+    const rows = (admin ? db.prepare(query).all() : db.prepare(query).all(req.user.username)) as MediaRow[];
+    const files = rows.map((row: MediaRow) => {
+      return {
+        id: row.id,
+        path: row.path,
+        expire: row.expire,
+        sername: row.username,
+        url: "/" + row.id
+      };
+    });
 
-  db.all(query, (err:Error, rows: []) => {
+    res.locals.files = files.reverse(); //reverse so newest files appear first
+    res.locals.Count = files.length;
+    next();
+  } catch (err) {
+    next(err);
+  }
+
+  /**db.all(query, (err:Error, rows: []) => {
     if (err) return next(err);
     const files = rows.map((row: MediaRow)=> {
       return {
@@ -37,7 +56,7 @@ const fetchMedia: Middleware = (req, res, next) => {
     res.locals.files = files.reverse(); //reverse so newest files appear first
     res.locals.Count = files.length;
     next();
-  });
+  });**/
 };
 
 const router = express.Router();
