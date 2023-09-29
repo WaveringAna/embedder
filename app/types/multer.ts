@@ -1,5 +1,5 @@
 import {Request} from "express";
-import multer, {FileFilterCallback, MulterError} from "multer";
+import multer, {FileFilterCallback} from "multer";
 
 import {db, MediaRow} from "./db";
 import {extension} from "./lib";
@@ -22,26 +22,27 @@ export const fileStorage = multer.diskStorage({
   ): void => {
     const nameAndExtension = extension(file.originalname);
     console.log(`Uploading ${file}`);
-    try {
-      console.log("querying")
-      const query = db.query(`SELECT * FROM media WHERE path = ?`);
-      const exists = query.all(nameAndExtension[0] + nameAndExtension[1]);
-      console.log(exists)
-
-      if (exists.length !== 0) {
-        const suffix = (new Date().getTime() / 1000).toString();
-        const newName = (request.body.title || nameAndExtension[0]) + "-" + suffix + nameAndExtension[1];
-        callback(null, newName);
-        console.log("ran callback with suffix")
-      } else {
-        const newName = (request.body.title || nameAndExtension[0]) + nameAndExtension[1];
-        callback(null, newName);
-        console.log("ran callback")
+    db.all("SELECT * FROM media WHERE path = ?", [nameAndExtension[0] + nameAndExtension[1]],  (err: Error, exists: []) => {
+      if (err) {
+        console.log(err);
+        callback(err, null);
       }
-    } catch (err: any) {
-      console.log(err);
-      callback(err, null); 
-    }
+      if (exists.length != 0) {
+        const suffix = new Date().getTime() / 1000;
+
+        if (request.body.title == "" || request.body.title  == null || request.body.title == undefined) {
+          callback(null, nameAndExtension[0] + "-" + suffix + nameAndExtension[1]);
+        } else {
+          callback(null, request.body.title + "-" + suffix + nameAndExtension[1]);
+        }
+      } else {
+        if (request.body.title == "" || request.body.title  == null || request.body.title == undefined) {
+          callback(null, nameAndExtension[0] + nameAndExtension[1]);
+        } else {
+          callback(null, request.body.title + nameAndExtension[1]);
+        }
+      }
+    });
   }
 });
 
