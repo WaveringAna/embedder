@@ -1,16 +1,53 @@
 import type {RequestHandler as Middleware, NextFunction} from "express";
 
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegpath from "@ffmpeg-installer/ffmpeg";
-import ffprobepath from "@ffprobe-installer/ffprobe";
-ffmpeg.setFfmpegPath(ffmpegpath.path);
-ffmpeg.setFfprobePath(ffprobepath.path);
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import ffprobeInstaller from '@ffprobe-installer/ffprobe';
+import which from 'which';
+
+//weird error that occurs where if I use the alias 'process', node cannot access it
+import Process from 'node:process';
+
+const getExecutablePath = (envVar: string, executable: string, installer: { path: string }) => {
+  if (Process.env[envVar]) {
+    return Process.env[envVar];
+  }
+
+  try {
+    return which.sync(executable);
+  } catch (error) {
+    return installer.path;
+  }
+};
+
+const ffmpegPath = getExecutablePath('EB_FFMPEG_PATH', 'ffmpeg', ffmpegInstaller);
+const ffprobePath = getExecutablePath('EB_FFPROBE_PATH', 'ffprobe', ffprobeInstaller);
+
+console.log(`Using ffmpeg from path: ${ffmpegPath}`);
+console.log(`Using ffprobe from path: ${ffprobePath}`);
+
+ffmpeg.setFfmpegPath(ffmpegPath!);
+ffmpeg.setFfprobePath(ffprobePath!);
 
 import fs from "fs";
 import process from "process";
 
 import {extension, videoExtensions, imageExtensions} from "./lib";
 import {db, MediaParams, insertToDB} from "./db";
+
+enum EncodingType {
+  CPU = 'libx264',
+  NVIDIA = 'h264_nvenc',
+  AMD = 'h264_vmf',
+  INTEL = 'h264_qsv',
+  APPLE = 'h264_videotoolbox'
+}
+
+let currentEncoding: EncodingType = EncodingType.CPU;
+
+export const setEncodingType = (type: EncodingType) => {
+  currentEncoding = type;
+};
 
 export const checkAuth: Middleware = (req, res, next) => {
   if (!req.user) {
@@ -73,11 +110,12 @@ export const convert: Middleware = (req, res, next)  => {
 
     if (videoExtensions.includes(nameAndExtension[1])) {
       console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
-
+      console.log(`Using ${currentEncoding} as encoder`);
       const startTime = Date.now();
       ffmpeg()
         .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
         .inputFormat(nameAndExtension[1].substring(1))
+        .outputOptions(`-c:v ${currentEncoding}`)
         .outputFormat("gif")
         .output(`uploads/${nameAndExtension[0]}.gif`)
         .on("end", function() {
@@ -88,6 +126,7 @@ export const convert: Middleware = (req, res, next)  => {
         .run();
     } else if (nameAndExtension[1] == ".gif") {
       console.log(`Converting ${nameAndExtension[0]}${nameAndExtension[1]} to mp4`);
+      console.log(`Using ${currentEncoding} as encoder`);
 
       const startTime = Date.now();
       ffmpeg(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
@@ -95,7 +134,7 @@ export const convert: Middleware = (req, res, next)  => {
         .outputFormat("mp4")
         .outputOptions([
           "-pix_fmt yuv420p",
-          "-c:v libx264",
+          `-c:v ${currentEncoding}`,
           "-movflags +faststart"
         ])
         .noAudio()
@@ -128,17 +167,20 @@ export const convertTo720p: Middleware = (req, res, next) => {
 
     const startTime = Date.now();
 
+    const outputOptions = [
+      '-vf', 'scale=-2:720',
+      '-c:v', currentEncoding,
+    ];
+
     ffmpeg()
       .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
-      .inputFormat(nameAndExtension[1].substring(1))
-      .outputOptions("-vf", "scale=-2:720")
+      .inputFormat('mp4')
+      .outputOptions(outputOptions)
       .output(`uploads/720p-${nameAndExtension[0]}${nameAndExtension[1]}`)
-      .on("end", function() {
-        console.log(`720p copy complete, took ${Date.now() - startTime} to complete`);
-        console.log(`Uploaded to uploads/720p-${nameAndExtension[0]}${nameAndExtension[1]}`);
-        next();
+      .on('end', () => {
+        console.log(`720p copy complete using ${currentEncoding}, took ${Date.now() - startTime}ms to complete`);
       })
-      .on("error", (e) => console.log(e))
+      .on('error', (e) => console.log(e))
       .run();
   }
 
