@@ -38,7 +38,7 @@ import {db, MediaParams, insertToDB} from "./db";
 enum EncodingType {
   CPU = 'libx264',
   NVIDIA = 'h264_nvenc',
-  AMD = 'h264_vmf',
+  AMD = 'h264_amf',
   INTEL = 'h264_qsv',
   APPLE = 'h264_videotoolbox'
 }
@@ -48,6 +48,20 @@ let currentEncoding: EncodingType = EncodingType.CPU;
 export const setEncodingType = (type: EncodingType) => {
   currentEncoding = type;
 };
+
+export const checkEnvForEncoder = () => {
+  const envEncoder = process.env.EB_ENCODER?.toUpperCase();
+
+  if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
+    setEncodingType(EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType);
+    console.log(`Setting encoding type to ${envEncoder} based on environment variable.`);
+  } else if (envEncoder) {
+    //I finally understand DHH
+    console.warn(`Invalid encoder value "${envEncoder}" in environment variable, defaulting to ${Object.keys(EncodingType).find(key => EncodingType[key as keyof typeof EncodingType] === currentEncoding)}.`);
+  }
+};
+
+checkEnvForEncoder();
 
 export const checkAuth: Middleware = (req, res, next) => {
   if (!req.user) {
@@ -171,6 +185,26 @@ export const convertTo720p: Middleware = (req, res, next) => {
       '-vf', 'scale=-2:720',
       '-c:v', currentEncoding,
     ];
+
+    // Adjust output options based on encoder for maximum quality
+    switch(currentEncoding) {
+      case EncodingType.CPU:
+        outputOptions.push('-crf', '0');
+        break;
+      case EncodingType.NVIDIA:
+        outputOptions.push('-rc', 'cqp', '-qp', '0');
+        break;
+      case EncodingType.AMD:
+        outputOptions.push('-qp_i', '0', '-qp_p', '0', '-qp_b', '0');
+        break;
+      case EncodingType.INTEL:
+        outputOptions.push('-global_quality', '1'); // Intel QSV specific setting for high quality
+        break;
+      case EncodingType.APPLE:
+        outputOptions.push('-global_quality', '1');
+        break;
+    }
+
 
     ffmpeg()
       .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)

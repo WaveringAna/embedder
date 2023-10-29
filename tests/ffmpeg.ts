@@ -27,7 +27,7 @@ ffmpeg.setFfprobePath(ffprobePath!);
 export enum EncodingType {
   CPU = 'libx264',
   NVIDIA = 'h264_nvenc',
-  AMD = 'h264_vmf',
+  AMD = 'h264_amf',
   INTEL = 'h264_qsv',
   APPLE = 'h264_videotoolbox',
 }
@@ -40,7 +40,28 @@ export const generateTestVideo = async (encodingType: EncodingType): Promise<voi
   const outputOptions = [
     '-vf', 'scale=-2:720',
     '-c:v', encodingType,
+    '-c:a', 'copy', // Copying the original audio stream
+    '-b:v', '8000k'
   ];
+
+  // Adjust output options based on encoder for maximum quality
+  switch(encodingType) {
+    case EncodingType.CPU:
+      outputOptions.push('-crf', '0');
+      break;
+    case EncodingType.NVIDIA:
+      outputOptions.push('-rc', 'cqp', '-qp', '0');
+      break;
+    case EncodingType.AMD:
+      outputOptions.push('-qp_i', '0', '-qp_p', '0', '-qp_b', '0');
+      break;
+    case EncodingType.INTEL:
+      outputOptions.push('-global_quality', '1'); // Intel QSV specific setting for high quality
+      break;
+    case EncodingType.APPLE:
+      outputOptions.push('-global_quality', '1');
+      break;
+  }
 
   return new Promise<void>((resolve, reject) => {
     ffmpeg()
