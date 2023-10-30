@@ -1,0 +1,6 @@
+# ignore all mp4 except for test.mp4
+*.mp4
+!test.mp4
+
+# ignore javascript files from tsc
+*.js

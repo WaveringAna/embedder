@@ -11,10 +11,10 @@ ffmpeg.setFfprobePath(ffprobepath.path);
 
 import fs from "fs";
 
-import {extension, videoExtensions} from "../types/lib";
-import {db, MediaRow, getPath, deleteId} from "../types/db";
-import {fileStorage} from "../types/multer";
-import {checkAuth, checkSharexAuth, convertTo720p, createEmbedData, handleUpload} from "../types/middleware";
+import {extension, videoExtensions} from "../lib/lib";
+import {db, MediaRow, getPath, deleteId} from "../lib/db";
+import {fileStorage} from "../lib/multer";
+import {checkAuth, checkSharexAuth, convertTo720p, createEmbedData, handleUpload} from "../lib/middleware";
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 /**Middleware to grab media from media database */

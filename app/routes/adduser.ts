@@ -1,7 +1,7 @@
 import type {RequestHandler as Middleware, Router, Request, Response, NextFunction} from "express";
 import express from "express";
 
-import {createUser} from "../types/db";
+import {createUser} from "../lib/db";
 
 const router: Router = express.Router();
 /**Middleware to check if a user is actually signed in */

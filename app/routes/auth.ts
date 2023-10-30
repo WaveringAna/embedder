@@ -3,8 +3,8 @@ import express from "express";
 import passport from "passport";
 import {Strategy as LocalStrategy} from "passport-local";
 
-import {User} from "../types/lib";
-import {db, UserRow} from "../types/db";
+import {User} from "../lib/lib";
+import {db, UserRow} from "../lib/db";
 
 const router = express.Router();
 

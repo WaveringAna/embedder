@@ -17,7 +17,7 @@ import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 
-import {db, expire, createDatabase, updateDatabase, MediaRow} from "./types/db";
+import {db, expire, createDatabase, updateDatabase, MediaRow} from "./lib/db";
 
 const app = express();
 const server = http.createServer(app);

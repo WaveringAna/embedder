@@ -40,8 +40,7 @@ export const generateTestVideo = async (encodingType: EncodingType): Promise<voi
   const outputOptions = [
     '-vf', 'scale=-2:720',
     '-c:v', encodingType,
-    '-c:a', 'copy', // Copying the original audio stream
-    '-b:v', '8000k'
+    '-c:a', 'copy',
   ];
 
   // Adjust output options based on encoder for maximum quality
