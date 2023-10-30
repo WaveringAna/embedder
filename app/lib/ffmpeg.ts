@@ -13,18 +13,18 @@ import which from 'which';
  * @property {string} NVIDIA - Uses the h264_nvenc codec for NVIDIA GPU-based encoding
  * @property {string} AMD - Uses the h264_amf codec for AMD GPU-based encoding
  * @property {string} INTEL - Uses the h264_qsv codec for Intel GPU-based encoding
- * @property {string} APPLE - Uses the h264_videotoolbox codec for Apple GPU-based encoding
+ * @property {string} APPLE - Uses the h264_videotoolbox codec for Apple GPU/MediaEngine-based encoding
  */
 export enum EncodingType {
-    CPU = 'libx264',
-    NVIDIA = 'h264_nvenc',
-    AMD = 'h264_amf',
-    INTEL = 'h264_qsv',
-    APPLE = 'h264_videotoolbox'
+  CPU = 'libx264',
+  NVIDIA = 'h264_nvenc',
+  AMD = 'h264_amf',
+  INTEL = 'h264_qsv',
+  APPLE = 'h264_videotoolbox'
 }
 
 /**
- * The current encoding type being used for video encoding.
+ * The current encoding type being used for video encoding. Default is CPU
  * @type {EncodingType}
  */
 export let currentEncoding: EncodingType = EncodingType.CPU;
@@ -35,7 +35,7 @@ export let currentEncoding: EncodingType = EncodingType.CPU;
  * @param {EncodingType} type - The encoding type to set.
  */
 export const setEncodingType = (type: EncodingType) => {
-    currentEncoding = type;
+  currentEncoding = type;
 };
 
 /**
@@ -50,15 +50,15 @@ export const setEncodingType = (type: EncodingType) => {
  * @throws Will throw an error if the executable is not found and the installer path is not available.
  */
 const getExecutablePath = (envVar: string, executable: string, installer: { path: string }) => {
-    if (process.env[envVar]) {
-        return process.env[envVar];
-    }
+  if (process.env[envVar]) {
+    return process.env[envVar];
+  }
 
-    try {
-        return which.sync(executable);
-    } catch (error) {
-        return installer.path;
-    }
+  try {
+    return which.sync(executable);
+  } catch (error) {
+    return installer.path;
+  }
 };
 
 const ffmpegPath = getExecutablePath('EB_FFMPEG_PATH', 'ffmpeg', ffmpegInstaller);
@@ -71,14 +71,14 @@ ffmpeg.setFfmpegPath(ffmpegPath!);
 ffmpeg.setFfprobePath(ffprobePath!);
 
 const checkEnvForEncoder = () => {
-    const envEncoder = process.env.EB_ENCODER?.toUpperCase();
+  const envEncoder = process.env.EB_ENCODER?.toUpperCase();
 
-    if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
-        setEncodingType(EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType);
-        console.log(`Setting encoding type to ${envEncoder} based on environment variable.`);
-    } else if (envEncoder) {
-        console.warn(`Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`);
-    }
+  if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
+    setEncodingType(EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType);
+    console.log(`Setting encoding type to ${envEncoder} based on environment variable.`);
+  } else if (envEncoder) {
+    console.warn(`Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`);
+  }
 };
 
 checkEnvForEncoder();
@@ -99,90 +99,78 @@ checkEnvForEncoder();
  * });
  */
 export const ffmpegDownscale = (path: string, filename: string, extension: string) => {
-    const startTime = Date.now();
-    const outputOptions = [
-        '-vf', 'scale=-2:720',
-        '-c:v', currentEncoding,
-        '-c:a', 'copy',
-    ];
+  const startTime = Date.now();
+  const outputOptions = [
+    '-vf', 'scale=-2:720',
+    '-c:v', currentEncoding,
+    '-c:a', 'copy',
+    "-pix_fmt", "yuv420p",
+  ];
 
-    // Adjust output options based on encoder for maximum quality
-    switch (currentEncoding) {
-        case EncodingType.CPU:
-            outputOptions.push('-crf', '0');
-            break;
-        case EncodingType.NVIDIA:
-            outputOptions.push('-rc', 'cqp', '-qp', '0');
-            break;
-        case EncodingType.AMD:
-            outputOptions.push('-qp_i', '0', '-qp_p', '0', '-qp_b', '0');
-            break;
-        case EncodingType.INTEL:
-            outputOptions.push('-global_quality', '1'); // Intel QSV specific setting for high quality
-            break;
-        case EncodingType.APPLE:
-            outputOptions.push('-global_quality', '1');
-            break;
-    }
-
-    return new Promise<void>((resolve, reject) => {
-        ffmpeg()
-            .input(path)
-            .outputOptions(outputOptions)
-            .output(`uploads/720p-${filename}${extension}`)
-            .on('end', () => {
-                console.log(`720p copy complete using ${currentEncoding}, took ${Date.now() - startTime}ms to complete`);
-                resolve();
-            })
-            .on('error', (e) => reject(new Error(e)))
-            .run();
-    });
+  return new Promise<void>((resolve, reject) => {
+    ffmpeg()
+      .input(path)
+      .outputOptions(outputOptions)
+      .output(`uploads/720p-${filename}${extension}`)
+      .on('end', () => {
+        console.log(`720p copy complete using ${currentEncoding}, took ${Date.now() - startTime}ms to complete`);
+        resolve();
+      })
+      .on('error', (e) => reject(new Error(e)))
+      .run();
+  });
 }
 
-/** Converts video to gif and vice versa using ffmpeg */
-/**export const convert: Middleware = (req, res, next)  => {
-  const files = req.files as Express.Multer.File[];
+/**
+ * Convert a video to a gif or vice versa using ffmpeg with various encoding options.
+ * 
+ * @param {string} path - The input video file path.
+ * @param {string} filename - The name of the file.
+ * @param {string} extension - The file extension of the file
+ * @returns {Promise<void>} - A promise that resolves when the conversion is complete, and rejects on error.
+ * 
+ * @example
+ * ffmpegConvert('input.mp4').then(() => {
+ *   console.log('Conversion complete.');
+ * }).catch((error) => {
+ *   console.log(`Error: ${error}`);
+ * });
+ */
+export const ffmpegConvert = (path: string, filename: string, extension: string) => {
+  const startTime = Date.now();
+  const outputOptions = [
+    '-vf', 'scale=-2:720',
+    '-c:v', currentEncoding,
+    '-c:a', 'copy',
+    "-movflags", "+faststart",
+    "-pix_fmt", "yuv420p",
+  ]
 
-  for (const file in files) {
-    const nameAndExtension = extension(files[file].originalname);
+  let outputFormat: string;
 
-    if (videoExtensions.includes(nameAndExtension[1])) {
-      console.log("Converting " + nameAndExtension[0] + nameAndExtension[1] + " to gif");
-      console.log(`Using ${currentEncoding} as encoder`);
-      const startTime = Date.now();
-      ffmpeg()
-        .input(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
-        .inputFormat(nameAndExtension[1].substring(1))
-        .outputOptions(`-c:v ${currentEncoding}`)
-        .outputFormat("gif")
-        .output(`uploads/${nameAndExtension[0]}.gif`)
-        .on("end", function() {
-          console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
-          console.log(`Uploaded to uploads/${nameAndExtension[0]}.gif`);
-        })
-        .on("error", (e) => console.log(e))
-        .run();
-    } else if (nameAndExtension[1] == ".gif") {
-      console.log(`Converting ${nameAndExtension[0]}${nameAndExtension[1]} to mp4`);
-      console.log(`Using ${currentEncoding} as encoder`);
-
-      const startTime = Date.now();
-      ffmpeg(`uploads/${nameAndExtension[0]}${nameAndExtension[1]}`)
-        .inputFormat("gif")
-        .outputFormat("mp4")
-        .outputOptions([
-          "-pix_fmt yuv420p",
-          `-c:v ${currentEncoding}`,
-          "-movflags +faststart"
-        ])
-        .noAudio()
-        .output(`uploads/${nameAndExtension[0]}.mp4`)
-        .on("end", function() {
-          console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
-          console.log(`Uploaded to uploads/${nameAndExtension[0]}.mp4`);
-          next();
-        })
-        .run();
-    }
+  if (videoExtensions.includes(extension)) {
+    outputFormat = '.gif';
+  } else if (extension == '.gif') {
+    outputFormat = '.mp4';
+  } else {
+    return new Promise<void>((resolve, reject) => {
+      reject(`Submitted file is neither a video nor a gif: ${path}`);
+    });
   }
-};**/
+
+  return new Promise<void>((resolve, reject) => {
+    ffmpeg()
+      .input(path)
+      .outputOptions(outputOptions)
+      .output(`uploads/`)
+      .outputFormat(outputFormat)
+      .output(`uploads/${filename}${outputFormat}`)
+      .on("end", function() {
+        console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
+        console.log(`uploads/${filename}${outputFormat}`);
+        resolve();
+      })
+      .on("error", (e) => reject(e))
+      .run();
+  });
+}
