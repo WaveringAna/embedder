@@ -1,13 +1,9 @@
 import type {RequestHandler as Middleware, Request, Response, NextFunction} from "express";
 import multer from "multer";
 import express from "express";
-import ffmpeg from "fluent-ffmpeg";
 import imageProbe from "probe-image-size";
-import ffmpegpath from "@ffmpeg-installer/ffmpeg";
-import ffprobepath from "@ffprobe-installer/ffprobe";
 
-ffmpeg.setFfmpegPath(ffmpegpath.path);
-ffmpeg.setFfprobePath(ffprobepath.path);
+import {ffProbe} from "../lib/ffmpeg";
 
 import fs from "fs";
 
@@ -57,15 +53,12 @@ router.get("/gifv/:file", async (req: Request, res: Response, next: NextFunction
 
   const nameAndExtension = extension(`uploads/${req.params.file}`);
   if (nameAndExtension[1] == ".mp4" || nameAndExtension[1] == ".mov" || nameAndExtension[1] == ".webm" || nameAndExtension[1] == ".gif") {
-    ffmpeg()
-      .input(`uploads/${req.params.file}`)
-      .inputFormat(nameAndExtension[1].substring(1))
-      .ffprobe((err: Error, data: ffmpeg.FfprobeData) => {
-        if (err) return next(err);
-        width = data.streams[0].width;
-        height = data.streams[0].height;
-        return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
-      }); 
+    let imageData = ffProbe(`uploads/${req.params.file}`, nameAndExtension[0], nameAndExtension[1]);
+
+    width = (await imageData).streams[0].width;
+    height = (await imageData).streams[0].height;
+
+    return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: width, height: height });
   } else {
     const imageData = await imageProbe(fs.createReadStream(`uploads/${req.params.file}`));
     return res.render("gifv", { url: url, host: `${req.protocol}://${req.get("host")}`, width: imageData.width, height: imageData.height });

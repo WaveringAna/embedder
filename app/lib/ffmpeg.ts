@@ -1,6 +1,6 @@
 import { extension, videoExtensions, imageExtensions } from "./lib";
 
-import ffmpeg from 'fluent-ffmpeg';
+import ffmpeg, { FfprobeData, ffprobe } from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import which from 'which';
@@ -172,5 +172,14 @@ export const ffmpegConvert = (path: string, filename: string, extension: string)
       })
       .on("error", (e) => reject(e))
       .run();
+  });
+}
+
+export const ffProbe = (path: string, filename: string, extension: string) => {
+  return new Promise<FfprobeData>((resolve, reject) => {
+    ffprobe(path, (err, data) => {
+      if (err) reject (err);
+      resolve(data);
+    });
   });
 }
