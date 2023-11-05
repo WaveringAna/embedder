@@ -36,17 +36,20 @@ export const generateTestVideo = async (encodingType: EncodingType): Promise<voi
   console.log(`Generating test video using ${encodingType}...`);
 
   const startTime = Date.now();
+  let totalFrames = 0;
 
   const outputOptions = [
     '-vf', 'scale=-2:720',
-    '-c:v', encodingType,
+    '-vcodec', encodingType,
     '-c:a', 'copy',
+    '-b:v', '5000k',
+    '-pix_fmt', 'yuv420p',
   ];
 
   // Adjust output options based on encoder for maximum quality
   switch(encodingType) {
     case EncodingType.CPU:
-      outputOptions.push('-crf', '0');
+      //outputOptions.push('-crf', '0');
       break;
     case EncodingType.NVIDIA:
       outputOptions.push('-rc', 'cqp', '-qp', '0');
@@ -64,12 +67,20 @@ export const generateTestVideo = async (encodingType: EncodingType): Promise<voi
 
   return new Promise<void>((resolve, reject) => {
     ffmpeg()
-      .input('test.mp4')
+      .input('unknown_replay_2023.10.29-22.57-00.00.38.103-00.01.00.016.mp4')
       .inputFormat('mp4')
       .outputOptions(outputOptions)
       .output(`720p-test-${encodingType}.mp4`)
+      .on('progress', (progress) => {
+        totalFrames = progress.frames;
+      })
       .on('end', () => {
+        const elapsedTime = (Date.now() - startTime) / 1000;  // Convert to seconds
+        const avgFps = totalFrames / elapsedTime;
+        
         console.log(`720p copy complete using ${encodingType}, took ${Date.now() - startTime}ms to complete`);
+        console.log(`Average FPS for the entire process: ${avgFps.toFixed(2)}`);
+        
         resolve();
       })
       .on('error', (e) => reject(new Error(e)))

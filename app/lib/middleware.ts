@@ -4,7 +4,7 @@ import fs from "fs";
 import process from "process";
 
 import {extension, videoExtensions, imageExtensions} from "./lib";
-import {db, MediaParams, insertToDB} from "./db";
+import {insertToDB} from "./db";
 import {ffmpegDownscale} from "./ffmpeg";
 
 export const checkAuth: Middleware = (req, res, next) => {
