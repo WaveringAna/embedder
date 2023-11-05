@@ -157,7 +157,6 @@ export const ffmpegConvert = (path: string, filename: string, extension: string)
       reject(`Submitted file is neither a video nor a gif: ${path}`);
     });
   }
-<<<<<<< HEAD
 
   return new Promise<void>((resolve, reject) => {
     ffmpeg()
@@ -184,6 +183,3 @@ export const ffProbe = (path: string, filename: string, extension: string) => {
     });
   });
 }
-=======
-};**/
->>>>>>> f730b3d (commit)
