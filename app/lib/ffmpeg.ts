@@ -1,13 +1,13 @@
 import { extension, videoExtensions, imageExtensions } from "./lib";
 
-import ffmpeg, { FfprobeData, ffprobe } from 'fluent-ffmpeg';
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
-import ffprobeInstaller from '@ffprobe-installer/ffprobe';
-import which from 'which';
+import ffmpeg, { FfprobeData, ffprobe } from "fluent-ffmpeg";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
+import which from "which";
 
 /**
  * Enum to represent different types of video encoding methods.
- * 
+ *
  * @enum {string}
  * @property {string} CPU - Uses the libx264 codec for CPU-based encoding
  * @property {string} NVIDIA - Uses the h264_nvenc codec for NVIDIA GPU-based encoding
@@ -16,11 +16,11 @@ import which from 'which';
  * @property {string} APPLE - Uses the h264_videotoolbox codec for Apple GPU/MediaEngine-based encoding
  */
 export enum EncodingType {
-  CPU = 'libx264',
-  NVIDIA = 'h264_nvenc',
-  AMD = 'h264_amf',
-  INTEL = 'h264_qsv',
-  APPLE = 'h264_videotoolbox'
+  CPU = "libx264",
+  NVIDIA = "h264_nvenc",
+  AMD = "h264_amf",
+  INTEL = "h264_qsv",
+  APPLE = "h264_videotoolbox",
 }
 
 /**
@@ -31,7 +31,7 @@ export let currentEncoding: EncodingType = EncodingType.CPU;
 
 /**
  * Sets the current encoding type.
- * 
+ *
  * @param {EncodingType} type - The encoding type to set.
  */
 export const setEncodingType = (type: EncodingType) => {
@@ -40,16 +40,20 @@ export const setEncodingType = (type: EncodingType) => {
 
 /**
  * Returns the path to an executable by checking environment variables, the system path, or a default installer.
- * 
+ *
  * @param {string} envVar - The environment variable to check for the executable's path.
  * @param {string} executable - The name of the executable to search for in the system path.
  * @param {Object} installer - An object containing the default installer path.
  * @param {string} installer.path - The default path to use if the executable is not found in the environment or system path.
- * 
+ *
  * @returns {string} - The path to the executable.
  * @throws Will throw an error if the executable is not found and the installer path is not available.
  */
-const getExecutablePath = (envVar: string, executable: string, installer: { path: string }) => {
+const getExecutablePath = (
+  envVar: string,
+  executable: string,
+  installer: { path: string },
+) => {
   if (process.env[envVar]) {
     return process.env[envVar];
   }
@@ -61,8 +65,16 @@ const getExecutablePath = (envVar: string, executable: string, installer: { path
   }
 };
 
-const ffmpegPath = getExecutablePath('EB_FFMPEG_PATH', 'ffmpeg', ffmpegInstaller);
-const ffprobePath = getExecutablePath('EB_FFPROBE_PATH', 'ffprobe', ffprobeInstaller);
+const ffmpegPath = getExecutablePath(
+  "EB_FFMPEG_PATH",
+  "ffmpeg",
+  ffmpegInstaller,
+);
+const ffprobePath = getExecutablePath(
+  "EB_FFPROBE_PATH",
+  "ffprobe",
+  ffprobeInstaller,
+);
 
 console.log(`Using ffmpeg from path: ${ffmpegPath}`);
 console.log(`Using ffprobe from path: ${ffprobePath}`);
@@ -74,10 +86,16 @@ const checkEnvForEncoder = () => {
   const envEncoder = process.env.EB_ENCODER?.toUpperCase();
 
   if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
-    setEncodingType(EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType);
-    console.log(`Setting encoding type to ${envEncoder} based on environment variable.`);
+    setEncodingType(
+      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType,
+    );
+    console.log(
+      `Setting encoding type to ${envEncoder} based on environment variable.`,
+    );
   } else if (envEncoder) {
-    console.warn(`Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`);
+    console.warn(
+      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
+    );
   }
 };
 
@@ -85,12 +103,12 @@ checkEnvForEncoder();
 
 /**
  * Downscale a video using ffmpeg with various encoding options.
- * 
+ *
  * @param {string} path - The input video file path.
  * @param {string} filename - The name of the file.
  * @param {string} extension - The file extension of the file
  * @returns {Promise<void>} - A promise that resolves when the downscaling is complete, and rejects on error.
- * 
+ *
  * @example
  * ffmpegDownscale('input.mp4').then(() => {
  *   console.log('Downscaling complete.');
@@ -98,13 +116,21 @@ checkEnvForEncoder();
  *   console.log(`Error: ${error}`);
  * });
  */
-export const ffmpegDownscale = (path: string, filename: string, extension: string) => {
+export const ffmpegDownscale = (
+  path: string,
+  filename: string,
+  extension: string,
+) => {
   const startTime = Date.now();
   const outputOptions = [
-    '-vf', 'scale=-2:720',
-    '-c:v', currentEncoding,
-    '-c:a', 'copy',
-    "-pix_fmt", "yuv420p",
+    "-vf",
+    "scale=-2:720",
+    "-c:v",
+    currentEncoding,
+    "-c:a",
+    "copy",
+    "-pix_fmt",
+    "yuv420p",
   ];
 
   return new Promise<void>((resolve, reject) => {
@@ -112,23 +138,27 @@ export const ffmpegDownscale = (path: string, filename: string, extension: strin
       .input(path)
       .outputOptions(outputOptions)
       .output(`uploads/720p-${filename}${extension}`)
-      .on('end', () => {
-        console.log(`720p copy complete using ${currentEncoding}, took ${Date.now() - startTime}ms to complete`);
+      .on("end", () => {
+        console.log(
+          `720p copy complete using ${currentEncoding}, took ${
+            Date.now() - startTime
+          }ms to complete`,
+        );
         resolve();
       })
-      .on('error', (e) => reject(new Error(e)))
+      .on("error", (e) => reject(new Error(e)))
       .run();
   });
-}
+};
 
 /**
  * Convert a video to a gif or vice versa using ffmpeg with various encoding options.
- * 
+ *
  * @param {string} path - The input video file path.
  * @param {string} filename - The name of the file.
  * @param {string} extension - The file extension of the file
  * @returns {Promise<void>} - A promise that resolves when the conversion is complete, and rejects on error.
- * 
+ *
  * @example
  * ffmpegConvert('input.mp4').then(() => {
  *   console.log('Conversion complete.');
@@ -136,22 +166,31 @@ export const ffmpegDownscale = (path: string, filename: string, extension: strin
  *   console.log(`Error: ${error}`);
  * });
  */
-export const ffmpegConvert = (path: string, filename: string, extension: string) => {
+export const ffmpegConvert = (
+  path: string,
+  filename: string,
+  extension: string,
+) => {
   const startTime = Date.now();
   const outputOptions = [
-    '-vf', 'scale=-2:720',
-    '-c:v', currentEncoding,
-    '-c:a', 'copy',
-    "-movflags", "+faststart",
-    "-pix_fmt", "yuv420p",
-  ]
+    "-vf",
+    "scale=-2:720",
+    "-c:v",
+    currentEncoding,
+    "-c:a",
+    "copy",
+    "-movflags",
+    "+faststart",
+    "-pix_fmt",
+    "yuv420p",
+  ];
 
   let outputFormat: string;
 
   if (videoExtensions.includes(extension)) {
-    outputFormat = '.gif';
-  } else if (extension == '.gif') {
-    outputFormat = '.mp4';
+    outputFormat = ".gif";
+  } else if (extension == ".gif") {
+    outputFormat = ".mp4";
   } else {
     return new Promise<void>((resolve, reject) => {
       reject(`Submitted file is neither a video nor a gif: ${path}`);
@@ -162,24 +201,30 @@ export const ffmpegConvert = (path: string, filename: string, extension: string)
     ffmpeg()
       .input(path)
       .outputOptions(outputOptions)
-      .output(`uploads/`)
+      .output("uploads/")
       .outputFormat(outputFormat)
       .output(`uploads/${filename}${outputFormat}`)
-      .on("end", function() {
-        console.log(`Conversion complete, took ${Date.now() - startTime} to complete`);
+      .on("end", function () {
+        console.log(
+          `Conversion complete, took ${Date.now() - startTime} to complete`,
+        );
         console.log(`uploads/${filename}${outputFormat}`);
         resolve();
       })
       .on("error", (e) => reject(e))
       .run();
   });
-}
+};
 
-export const ffProbe = (path: string, filename: string, extension: string) => {
+export const ffProbe = async (
+  path: string,
+  filename: string,
+  extension: string,
+) => {
   return new Promise<FfprobeData>((resolve, reject) => {
     ffprobe(path, (err, data) => {
-      if (err) reject (err);
+      if (err) reject(err);
       resolve(data);
     });
   });
-}
+};
