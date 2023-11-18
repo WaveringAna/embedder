@@ -11,14 +11,7 @@
       <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
       <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
       <link rel="manifest" href="/site.webmanifest">
-      <%
-         function extension(string) {
-         return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
-         }
-
-         const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'];
-         const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp'];
-      %>
+      <script src="https://unpkg.com/htmx.org@1.9.8"></script>
    </head>
    <body>
       <section class="embedderapp">
@@ -65,68 +58,13 @@
                <p class="dragregion">Click the file to copy the url</p>
             </div>
          </form>
-         <% if (Count > 0) { %>
          <section class="main">
             <ul class="embedder-list">
-               <% files.forEach(function(file) { %>
-               <li id="<%= file.path %>" class="show">
-                  <form action="<%= file.url %>" method="post">
-                     <div class="view">
-                        <% if (videoExtensions.includes(extension(file.path))) { %>
-                        <div class="video">
-                           <video class="image" autoplay loop muted playsinline loading="lazy">
-                              <source src="/uploads/720p-<%= file.path %>" loading="lazy">
-                           </video>
-                           <div class="overlay">
-                              <% if(user.username == "admin" && file.username != "admin") { %>
-                              <small class="username"><%= file.username %></small>
-                              <br>
-                              <% } %>
-                              <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
-                           </div>
-                        </div>
-                        <% } else if (extension(file.path) == ".gif") { %>
-                        <div class="video">
-                           <img class="image" src="/uploads/720p-<%=file.path %>" width="100%" onclick="copyURI(event);" loading="lazy">
-                           <div class="overlay">
-                              <% if(user.username == "admin" && file.username != "admin") { %>
-                              <small class="username"><%= file.username %></small>
-                              <br>
-                              <% } %>
-                              <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
-                           </div>
-                        </div>
-                        <% } else if (imageExtensions.includes(extension(file.path))) { %>
-                        <div class="video">
-                           <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)" loading="lazy">
-                           <% if(user.username == "admin" && file.username != "admin") { %>
-                           <div class="overlay">
-                              <small class="username"><%= file.username %></small>
-                           </div>
-                           <% } %> 
-                        </div>
-                        <% } else {%> <!-- non-media file -->
-                        <div class="nonmedia" onclick="copyPath('/uploads/<%=file.path%>')">
-                           <p><%=extension(file.path)%> file</p>
-                           <% if(user.username == "admin" && file.username != "admin") { %>
-                           <div class="overlay">
-                              <small class="username"><%= file.username %></small>
-                           </div>
-                           <% } %>
-                        </div>
-                        <% } %>
-                        <label><%= file.path %></label>
-                        <button class="destroy" form="delete-<%= file.path %>"></button>
-                        <button type="button" class="fullsize" onclick="openFullSize('/uploads/<%=file.path%>')"></button>
-                     </div>
-                  </form>
-                  <form name="delete-<%= file.path %>" id="delete-<%= file.path %>" action="<%= file.url %>/delete" method="post">
-                  </form>
-               </li>
-               <% }); %>
+               <% if (files && files.length > 0) { %>
+               <%- include('partials/_fileList.ejs',) %>
+               <% } %>
             </ul>
          </section>
-         <% } %>
       </section>
       <footer class="info">
          <p><a href="https://l.nekomimi.pet/project">Created by Wavering Ana</a></p>

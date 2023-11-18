@@ -1,0 +1,176 @@
+<%
+function extension(string) {
+return string.slice((string.lastIndexOf(".") - 2 >>> 0) + 2);
+}
+
+const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'];
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp'];
+%>
+
+<script>
+  let files = JSON.parse('<%- JSON.stringify(files) %>');
+  const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'];
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp'];
+
+  function extension(string) {
+   console.log(string)
+    const file = string.split("/").pop();
+    return [
+      file.substr(0, file.lastIndexOf(".")),
+      file.substr(file.lastIndexOf("."), file.length).toLowerCase(),
+    ];
+  }
+
+  console.log(files)
+  files.forEach(file => {
+    if (videoExtensions.includes(extension(file.path)[1])) {
+      console.log(`Fetching /uploads/720p-${file.path}.processing`)
+      fetch(`/uploads/720p-${file.path}.processing`)
+        .then(response => {
+          if (response.ok) {
+            // Video is still processing
+            console.log(`File /uploads/720p-${file.path}.processing exists, starting check...`)
+            checkFileAvailability(file.path);
+          } else {
+            // Video done processing, display it immediately
+            console.log(`File /uploads/720p-${file.path}.processing no longer exists, displaying...`)
+            createVideoElement(file.path);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  });
+
+  function checkFileAvailability(filePath) {
+    const interval = setInterval(() => {
+      fetch(`/uploads/720p-${filePath}.processing`)
+        .then(response => {
+          if (!response.ok) {
+            clearInterval(interval);
+            createVideoElement(filePath);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }, 5000); // Check every 5 seconds
+  }
+
+  function createVideoElement(filePath) {
+    const videoContainer = document.getElementById(`video-${filePath}`);
+    videoContainer.innerHTML = `
+      <video class="image" autoplay loop muted playsinline loading="lazy">
+        <source src="/uploads/720p-${filePath}" loading="lazy">
+      </video>
+    `;
+    videoContainer.style.display = 'block';
+    document.getElementById(`spinner-${filePath}`).style.display = 'none';
+  }
+</script>
+
+<style>
+   .spinner {
+  /* Positioning and Sizing */
+  width: 100px;
+  height: 100px;
+  position: relative;
+  margin: 50px auto; /* Centering the spinner */
+
+  /* Text Styling */
+  color: #555;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  padding-top: 80px; /* Adjust as needed for text position */
+
+  /* Adding a background to the spinner for better visibility */
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Keyframes for the spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Spinner Animation */
+.spinner::before {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px; /* Spinner Size */
+  height: 40px;
+  margin-top: -20px; /* Half of height */
+  margin-left: -20px; /* Half of width */
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #007bff; /* Spinner Color */
+  animation: spin 1s linear infinite;
+}
+</style>
+
+
+<!-- _fileList.ejs -->
+<% files.forEach(function(file) { %>
+<li id="<%= file.path %>" class="show">
+  <form action="<%= file.url %>" method="post">
+    <div class="view">
+      <% if (videoExtensions.includes(extension(file.path))) { %>
+      <!-- Show spinner initially -->
+      <div id="spinner-<%= file.path %>" class="spinner">Optimizing Video for Sharing...</div>
+
+      <!-- Hidden video container to be displayed later -->
+      <div class="video">
+        <video id="video-<%= file.path %>" class="image" autoplay loop muted playsinline loading="lazy" style="display: none;">
+          <source src="/uploads/720p-<%= file.path %>" loading="lazy">
+        </video>
+        <div class="overlay">
+         <% if(user.username == "admin" && file.username != "admin") { %>
+         <small class="username"><%= file.username %></small>
+         <br>
+         <% } %>
+         <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+         </div>
+      </div>
+      <% } else if (extension(file.path) == ".gif") { %>
+      <div class="video">
+        <img class="image" src="/uploads/720p-<%=file.path %>" width="100%" onclick="copyURI(event);" loading="lazy">
+        <div class="overlay">
+          <% if(user.username == "admin" && file.username != "admin") { %>
+          <small class="username"><%= file.username %></small>
+          <br>
+          <% } %>
+          <a href="/gifv/<%=file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+        </div>
+      </div>
+      <% } else if (imageExtensions.includes(extension(file.path))) { %>
+      <div class="video">
+        <img class="image" src="/uploads/<%=file.path %>" width="100%" onclick="copyURI(event)" loading="lazy">
+        <% if(user.username == "admin" && file.username != "admin") { %>
+        <div class="overlay">
+          <small class="username"><%= file.username %></small>
+        </div>
+        <% } %>
+      </div>
+      <% } else {%>
+      <!-- non-media file -->
+      <div class="nonmedia" onclick="copyPath('/uploads/<%=file.path%>')">
+        <p><%=extension(file.path)%> file</p>
+        <% if(user.username == "admin" && file.username != "admin") { %>
+        <div class="overlay">
+          <small class="username"><%= file.username %></small>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+      <label><%= file.path %></label>
+      <button class="destroy" form="delete-<%= file.path %>"></button>
+      <button type="button" class="fullsize" onclick="openFullSize('/uploads/<%=file.path%>')"></button>
+    </div>
+  </form>
+  <form name="delete-<%= file.path %>" id="delete-<%= file.path %>" action="<%= file.url %>/delete" method="post">
+  </form>
+</li>
+<% }); %>

@@ -5,6 +5,8 @@ import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 import which from "which";
 
+import fs from "fs";
+
 /**
  * Enum to represent different types of video encoding methods.
  *
@@ -52,7 +54,7 @@ export const setEncodingType = (type: EncodingType) => {
 const getExecutablePath = (
   envVar: string,
   executable: string,
-  installer: { path: string },
+  installer: { path: string }
 ) => {
   if (process.env[envVar]) {
     return process.env[envVar];
@@ -68,12 +70,12 @@ const getExecutablePath = (
 const ffmpegPath = getExecutablePath(
   "EB_FFMPEG_PATH",
   "ffmpeg",
-  ffmpegInstaller,
+  ffmpegInstaller
 );
 const ffprobePath = getExecutablePath(
   "EB_FFPROBE_PATH",
   "ffprobe",
-  ffprobeInstaller,
+  ffprobeInstaller
 );
 
 console.log(`Using ffmpeg from path: ${ffmpegPath}`);
@@ -87,14 +89,14 @@ const checkEnvForEncoder = () => {
 
   if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
     setEncodingType(
-      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType,
+      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType
     );
     console.log(
-      `Setting encoding type to ${envEncoder} based on environment variable.`,
+      `Setting encoding type to ${envEncoder} based on environment variable.`
     );
   } else if (envEncoder) {
     console.warn(
-      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
+      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`
     );
   }
 };
@@ -119,7 +121,7 @@ checkEnvForEncoder();
 export const ffmpegDownscale = (
   path: string,
   filename: string,
-  extension: string,
+  extension: string
 ) => {
   const startTime = Date.now();
   const outputOptions = [
@@ -138,15 +140,32 @@ export const ffmpegDownscale = (
       .input(path)
       .outputOptions(outputOptions)
       .output(`uploads/720p-${filename}${extension}`)
+      .on("start", () => {
+        // Create the .processing file
+        fs.closeSync(
+          fs.openSync(`uploads/720p-${filename}${extension}.processing`, "w")
+        );
+      })
       .on("end", () => {
         console.log(
           `720p copy complete using ${currentEncoding}, took ${
             Date.now() - startTime
-          }ms to complete`,
+          }ms to complete`
         );
+
+        // Delete the .processing file
+        fs.unlinkSync(`uploads/720p-${filename}${extension}.processing`);
+
         resolve();
       })
-      .on("error", (e) => reject(new Error(e)))
+      .on("error", (e) => {
+        // Ensure to delete the .processing file even on error
+        if (fs.existsSync(`uploads/720p-${filename}${extension}.processing`)) {
+          fs.unlinkSync(`uploads/720p-${filename}${extension}.processing`);
+        }
+
+        reject(new Error(e));
+      })
       .run();
   });
 };
@@ -169,7 +188,7 @@ export const ffmpegDownscale = (
 export const ffmpegConvert = (
   path: string,
   filename: string,
-  extension: string,
+  extension: string
 ) => {
   const startTime = Date.now();
   const outputOptions = [
@@ -206,7 +225,7 @@ export const ffmpegConvert = (
       .output(`uploads/${filename}${outputFormat}`)
       .on("end", function () {
         console.log(
-          `Conversion complete, took ${Date.now() - startTime} to complete`,
+          `Conversion complete, took ${Date.now() - startTime} to complete`
         );
         console.log(`uploads/${filename}${outputFormat}`);
         resolve();
@@ -219,7 +238,7 @@ export const ffmpegConvert = (
 export const ffProbe = async (
   path: string,
   filename: string,
-  extension: string,
+  extension: string
 ) => {
   return new Promise<FfprobeData>((resolve, reject) => {
     ffprobe(path, (err, data) => {

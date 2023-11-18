@@ -4,6 +4,7 @@ import type {
   Response,
   NextFunction,
 } from "express";
+
 import multer from "multer";
 import express from "express";
 import imageProbe from "probe-image-size";
@@ -64,6 +65,10 @@ router.get(
     res.render("index", { user: req.user });
   },
 );
+
+/*router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
+  res.render("partials/_fileList"); // Render only the file list partial
+});*/
 
 router.get(
   "/gifv/:file",
@@ -166,4 +171,3 @@ router.post(
 );
 
 export default router;
-
