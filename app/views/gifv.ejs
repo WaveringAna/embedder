@@ -48,11 +48,77 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta property="og:url" content="<%= host %>/uploads/<%= extension(url)[0] + extension(url)[1] %>"></meta>
   <% } %>
 </head>
+
+<style>
+body {
+    background-color: #121212; /* Dark background */
+    color: #e0e0e0; /* Light text color for contrast */
+    font-family: Arial, sans-serif; /* A modern, readable font */
+    margin: 0;
+    padding: 20px;
+}
+
+a {
+    color: #bb86fc; /* A lighter shade for links */
+}
+
+.container {
+    max-width: 800px; /* Limit the width of the content */
+    margin: auto;
+    padding: 20px;
+    background-color: #1e1e1e; /* Slightly lighter than body background */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Adding a subtle shadow for depth */
+}
+
+.header {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+p {
+    line-height: 1.6; /* Improve readability */
+}
+
+/* Optionally, you can add media query for dark mode based on user's system preferences */
+@media (prefers-color-scheme: dark) {
+    /* Dark mode styles */
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #1e1e1e; /* Dark background for the footer */
+    color: #e0e0e0; /* Light text color for contrast */
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+footer p {
+    margin: 0;
+}
+
+footer a {
+    color: #bb86fc; /* Light shade for links, adjust as needed */
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline; /* Adds an underline on hover for better user experience */
+}
+
+</style>
+
 <body>
   <% if (videoExtensions.includes(extension(url)[1])) { %>
-  <video autoplay loop muted playsinline class="image" width="100%"><source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>"></video>
+  <video class="image" width="100%" controls autoplay loop muted><source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>"></video>
   <% } else { %>
   <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" width="100%">
   <% } %>
+
+  <footer>
+    <p>Powered by <a href="https://github.com/waveringana/embedder">Embedder</a> created by <a href="https://github.com/waveringana">WaveringAna</a></p>
+</footer>
 </body>
 </html>
