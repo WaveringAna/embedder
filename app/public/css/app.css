@@ -21,6 +21,60 @@
 	line-height: 40px;
 }
 
+.spinner {
+	/* Positioning and Sizing */
+	width: 100px;
+	height: 100px;
+	position: relative;
+	margin: 50px auto;
+	/* Centering the spinner */
+
+	/* Text Styling */
+	color: #555;
+	text-align: center;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	padding-top: 80px;
+	/* Adjust as needed for text position */
+
+	/* Adding a background to the spinner for better visibility */
+	background-color: rgba(255, 255, 255, 0.8);
+	border-radius: 10px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Keyframes for the spinner animation */
+  @keyframes spin {
+	0% {
+	  transform: rotate(0deg);
+	}
+
+	100% {
+	  transform: rotate(360deg);
+	}
+  }
+
+  /* Spinner Animation */
+  .spinner::before {
+	content: '';
+	box-sizing: border-box;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 40px;
+	/* Spinner Size */
+	height: 40px;
+	margin-top: -20px;
+	/* Half of height */
+	margin-left: -20px;
+	/* Half of width */
+	border-radius: 50%;
+	border: 2px solid transparent;
+	border-top-color: #007bff;
+	/* Spinner Color */
+	animation: spin 1s linear infinite;
+  }
+
 #search {
 	padding: 6px 12px;
 	background: rgb(31, 32, 35);

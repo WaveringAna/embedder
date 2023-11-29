@@ -1,0 +1,12 @@
+FROM oven/bun:alpine
+
+WORKDIR /usr/src/app
+
+COPY ./tsconfig.json /usr/src/app
+COPY ./package*.json /usr/src/app/
+COPY ./bun.lockb /usr/src/app
+COPY ./app/ /usr/src/app/app
+
+RUN bun install
+
+CMD ["bun", "start"]

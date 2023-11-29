@@ -3,7 +3,7 @@ import type { RequestHandler as Middleware, NextFunction } from "express";
 import fs from "fs";
 import process from "process";
 
-import { extension, videoExtensions, imageExtensions } from "./lib";
+import { extension, videoExtensions, imageExtensions, oembedObj } from "./lib";
 import { insertToDB } from "./db";
 import { ffmpegDownscale, ffProbe } from "./ffmpeg";
 import { ffprobe } from "fluent-ffmpeg";
@@ -50,15 +50,9 @@ export const createEmbedData: Middleware = async (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   for (const file in files) {
     const nameAndExtension = extension(files[file].originalname);
-    const ffProbeData = await ffProbe(
-      `uploads/${files[file].originalname}`,
-      nameAndExtension[0],
-      nameAndExtension[1],
-    );
-    const width = ffProbeData.streams[0].width;
-    const height = ffProbeData.streams[0].height;
+    const isMedia = videoExtensions.includes(nameAndExtension[1]) || imageExtensions.includes(nameAndExtension[1]);
 
-    const oembed = {
+    const oembed: oembedObj = {
       type: "video",
       version: "1.0",
       provider_name: "embedder",
@@ -66,10 +60,23 @@ export const createEmbedData: Middleware = async (req, res, next) => {
       cache_age: 86400,
       html: `<iframe src='${req.protocol}://${req.get("host")}/gifv/${
         nameAndExtension[0]
-      }${nameAndExtension[1]}'></iframe>`,
-      width: width,
-      height: height,
+      }${nameAndExtension[1]}'></iframe>`
     };
+
+    if (isMedia) {
+      let ffProbeData;
+      try { ffProbeData = await ffProbe(
+        `uploads/${files[file].originalname}`,
+        nameAndExtension[0],
+        nameAndExtension[1],
+      ); } catch (error) {
+        console.log(`Error: ${error}`);
+        console.log(nameAndExtension[1]);
+      }
+
+      oembed.width = ffProbeData.streams[0].width;
+      oembed.height = ffProbeData.streams[0].height;
+    }
 
     fs.writeFile(
       `uploads/oembed-${nameAndExtension[0]}${nameAndExtension[1]}.json`,
@@ -121,23 +128,27 @@ export const convertTo720p: Middleware = (req, res, next) => {
 };
 
 /**Middleware for handling uploaded files. Inserts it into the database */
-export const handleUpload: Middleware = (req, res, next) => {
+export const handleUpload: Middleware = async (req, res, next) => {
   if (!req.file && !req.files) {
     console.log("No files were uploaded");
     return res.status(400).send("No files were uploaded.");
   }
 
-  const files = req.files ? (req.files as Express.Multer.File[]) : req.file; //Check if a single file was uploaded or multiple
-  const username = req.user ? req.user.username : "sharex"; //if no username was provided, we can presume that it is sharex
+  const files = req.files ? (req.files as Express.Multer.File[]) : req.file;
+  const username = req.user ? req.user.username : "sharex";
   const expireDate: Date = req.body.expire
     ? new Date(Date.now() + req.body.expire * 24 * 60 * 60 * 1000)
     : null;
 
-  if (files instanceof Array) {
-    for (const file in files) {
-      insertToDB(files[file].filename, expireDate, username);
+  try {
+    if (files instanceof Array) {
+      await Promise.all(files.map(file => insertToDB(file.filename, expireDate, username)));
+    } else {
+      await insertToDB(files.filename, expireDate, username);
     }
-  } else insertToDB(files.filename, expireDate, username);
-
-  next();
+    next();
+  } catch (error) {
+    console.error("Error in handleUpload:", error);
+    res.status(500).send("Error processing files.");
+  }
 };

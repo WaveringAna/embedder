@@ -25,6 +25,17 @@ export interface User {
   salt?: any;
 }
 
+export interface oembedObj {
+  type: string;
+  version: string;
+  provider_name: string;
+  provider_url: string;
+  cache_age: number;
+  html: string;
+  width?: number;
+  height?: number;
+}
+
 export const videoExtensions = [
   ".mp4",
   ".mov",

@@ -12,6 +12,7 @@ import imageProbe from "probe-image-size";
 import { ffProbe } from "../lib/ffmpeg";
 
 import fs from "fs";
+import path from "path";
 
 import { extension, videoExtensions } from "../lib/lib";
 import { db, MediaRow, getPath, deleteId } from "../lib/db";
@@ -26,6 +27,7 @@ import {
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 /**Middleware to grab media from media database */
+
 const fetchMedia: Middleware = (req, res, next) => {
   const admin: boolean = req.user.username == "admin" ? true : false;
   /**Check if the user is an admin, if so, show all posts from all users */
@@ -63,12 +65,12 @@ router.get(
   (req: Request, res: Response) => {
     res.locals.filter = null;
     res.render("index", { user: req.user });
-  },
+  }
 );
 
-/*router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
-  res.render("partials/_fileList"); // Render only the file list partial
-});*/
+router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
+  res.render("partials/_fileList", { user: req.user }); // Render only the file list partial
+});
 
 router.get(
   "/gifv/:file",
@@ -89,7 +91,7 @@ router.get(
       const imageData = ffProbe(
         `uploads/${req.params.file}`,
         nameAndExtension[0],
-        nameAndExtension[1],
+        nameAndExtension[1]
       );
 
       width = (await imageData).streams[0].width;
@@ -103,7 +105,7 @@ router.get(
       });
     } else {
       const imageData = await imageProbe(
-        fs.createReadStream(`uploads/${req.params.file}`),
+        fs.createReadStream(`uploads/${req.params.file}`)
       );
       return res.render("gifv", {
         url: url,
@@ -112,7 +114,7 @@ router.get(
         height: imageData.height,
       });
     }
-  },
+  }
 );
 
 router.post(
@@ -123,10 +125,11 @@ router.post(
     convertTo720p,
     createEmbedData,
     handleUpload,
+    fetchMedia,
   ],
   (req: Request, res: Response) => {
-    res.redirect("/");
-  },
+    return res.render("partials/_fileList", { user: req.user }); // Render only the file list partial
+  }
 );
 
 router.post(
@@ -134,40 +137,63 @@ router.post(
   [checkSharexAuth, upload.single("fileupload"), createEmbedData, handleUpload],
   (req: Request, res: Response) => {
     return res.send(
-      `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
+      `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
     );
-  },
+  }
 );
 
-router.post(
+router.get(
   "/:id(\\d+)/delete",
   [checkAuth],
-  async (req: Request, res: Response) => {
-    const path: any = await getPath(req.params.id);
+  async (req: Request, res: Response, next: NextFunction) => {
+    const filename: any = await getPath(req.params.id);
+    console.log(filename);
+    const filePath = path.join(__dirname , "../../uploads/" + filename.path);
+    const oembed = path.join(
+      __dirname , "../../uploads/oembed-" + filename.path + ".json"
+    );
 
-    const nameAndExtension = extension(path.path);
-
-    const filesToDelete = [path.path, "oembed-" + path.path + ".json"];
+    const nameAndExtension = extension(filePath);
+    const filesToDelete = [filePath, oembed];
 
     if (
       videoExtensions.includes(nameAndExtension[1]) ||
       nameAndExtension[1] == ".gif"
     ) {
-      filesToDelete.push("720p-" + path.path);
+      filesToDelete.push(
+        path.join(__dirname , "../../uploads/720p-" + filename.path)
+      );
     }
 
-    filesToDelete.forEach((path) => {
-      fs.unlink(path, async (err) => {
-        console.log(`Deleting ${path}`);
-        if (err && err.errno == -4058) {
-          await deleteId("media", req.params.id);
-        }
-        await deleteId("media", req.params.id);
-      });
-    });
+    // Wait for all file deletions and database operations to complete
+    await Promise.all(
+      filesToDelete.map(async (path) => {
+        return new Promise<void>((resolve, reject) => {
+          fs.unlink(path, async (err) => {
+            console.log(`Deleting ${path}`);
+            if (err) {
+              if ([-4058, -2].includes(err.errno)) {
+                //file not found
+                console.log("File not found, deleting from database");
+                await deleteId("media", req.params.id);
+              }
+              console.error(`Error deleting file ${path}:`, err);
+              reject(err);
+              return;
+            }
+            await deleteId("media", req.params.id);
+            resolve();
+          });
+        });
+      })
+    );
 
-    return res.redirect("/");
+    next();
   },
+  [fetchMedia],
+  (req: Request, res: Response) => {
+    return res.render("partials/_fileList", { user: req.user });
+  }
 );
 
 export default router;

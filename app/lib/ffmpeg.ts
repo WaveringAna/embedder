@@ -54,8 +54,8 @@ export const setEncodingType = (type: EncodingType) => {
 const getExecutablePath = (
   envVar: string,
   executable: string,
-  installer: { path: string }
-) => {
+  installer: { path: string },
+): string => {
   if (process.env[envVar]) {
     return process.env[envVar];
   }
@@ -70,12 +70,13 @@ const getExecutablePath = (
 const ffmpegPath = getExecutablePath(
   "EB_FFMPEG_PATH",
   "ffmpeg",
-  ffmpegInstaller
+  ffmpegInstaller,
 );
+
 const ffprobePath = getExecutablePath(
   "EB_FFPROBE_PATH",
   "ffprobe",
-  ffprobeInstaller
+  ffprobeInstaller,
 );
 
 console.log(`Using ffmpeg from path: ${ffmpegPath}`);
@@ -89,14 +90,14 @@ const checkEnvForEncoder = () => {
 
   if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
     setEncodingType(
-      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType
+      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType,
     );
     console.log(
-      `Setting encoding type to ${envEncoder} based on environment variable.`
+      `Setting encoding type to ${envEncoder} based on environment variable.`,
     );
   } else if (envEncoder) {
     console.warn(
-      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`
+      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
     );
   }
 };
@@ -121,7 +122,7 @@ checkEnvForEncoder();
 export const ffmpegDownscale = (
   path: string,
   filename: string,
-  extension: string
+  extension: string,
 ) => {
   const startTime = Date.now();
   const outputOptions = [
@@ -136,32 +137,31 @@ export const ffmpegDownscale = (
   ];
 
   return new Promise<void>((resolve, reject) => {
+    const progressFile = `uploads/${filename}${extension}-progress.json`;
+
     ffmpeg()
       .input(path)
       .outputOptions(outputOptions)
       .output(`uploads/720p-${filename}${extension}`)
-      .on("start", () => {
-        // Create the .processing file
-        fs.closeSync(
-          fs.openSync(`uploads/720p-${filename}${extension}.processing`, "w")
-        );
+      .on("progress", function(progress) {
+        fs.writeFileSync(progressFile, JSON.stringify({ progress: progress.percent / 100 }));
       })
       .on("end", () => {
         console.log(
           `720p copy complete using ${currentEncoding}, took ${
             Date.now() - startTime
-          }ms to complete`
+          }ms to complete`,
         );
 
         // Delete the .processing file
-        fs.unlinkSync(`uploads/720p-${filename}${extension}.processing`);
+        fs.unlinkSync(progressFile);
 
         resolve();
       })
       .on("error", (e) => {
         // Ensure to delete the .processing file even on error
-        if (fs.existsSync(`uploads/720p-${filename}${extension}.processing`)) {
-          fs.unlinkSync(`uploads/720p-${filename}${extension}.processing`);
+        if (fs.existsSync(progressFile)) {
+          fs.unlinkSync(progressFile);
         }
 
         reject(new Error(e));
@@ -188,7 +188,7 @@ export const ffmpegDownscale = (
 export const ffmpegConvert = (
   path: string,
   filename: string,
-  extension: string
+  extension: string,
 ) => {
   const startTime = Date.now();
   const outputOptions = [
@@ -217,15 +217,20 @@ export const ffmpegConvert = (
   }
 
   return new Promise<void>((resolve, reject) => {
+    const progressFile = `uploads/${filename}${extension}-progress.json`;
+
     ffmpeg()
       .input(path)
       .outputOptions(outputOptions)
       .output("uploads/")
       .outputFormat(outputFormat)
       .output(`uploads/${filename}${outputFormat}`)
+      .on("progress", function(progress) {
+        fs.writeFileSync(progressFile, JSON.stringify({ progress: progress.percent / 100 }));
+      })
       .on("end", function () {
         console.log(
-          `Conversion complete, took ${Date.now() - startTime} to complete`
+          `Conversion complete, took ${Date.now() - startTime} to complete`,
         );
         console.log(`uploads/${filename}${outputFormat}`);
         resolve();
@@ -238,9 +243,14 @@ export const ffmpegConvert = (
 export const ffProbe = async (
   path: string,
   filename: string,
-  extension: string
+  extension: string,
 ) => {
   return new Promise<FfprobeData>((resolve, reject) => {
+    if (!videoExtensions.includes(extension) && !imageExtensions.includes(extension)) {
+      console.log(`Extension is ${extension}`);
+      reject(`Submitted file is neither a video nor an image: ${path}`);
+    }
+
     ffprobe(path, (err, data) => {
       if (err) reject(err);
       resolve(data);
