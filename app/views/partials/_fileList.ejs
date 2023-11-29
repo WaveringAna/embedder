@@ -7,6 +7,12 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
 const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp'];
 %>
 
+<script>
+  newMediaList = JSON.parse('<%- JSON.stringify(files) %>');
+  console.log("executed")
+  refreshMediaList(newMediaList);
+</script>
+
 <!-- _fileList.ejs -->
 <% files.forEach(function(file) { %>
 <li id="<%= file.path %>" class="show">

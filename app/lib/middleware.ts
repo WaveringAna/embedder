@@ -49,7 +49,7 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
 export const createEmbedData: Middleware = async (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   for (const file in files) {
-    const nameAndExtension = extension(files[file].originalname);
+    const nameAndExtension = extension(files[file].filename);
     const isMedia = videoExtensions.includes(nameAndExtension[1]) || imageExtensions.includes(nameAndExtension[1]);
 
     const oembed: oembedObj = {
@@ -66,7 +66,7 @@ export const createEmbedData: Middleware = async (req, res, next) => {
     if (isMedia) {
       let ffProbeData;
       try { ffProbeData = await ffProbe(
-        `uploads/${files[file].originalname}`,
+        `uploads/${files[file].filename}`,
         nameAndExtension[0],
         nameAndExtension[1],
       ); } catch (error) {
@@ -97,19 +97,19 @@ export const convertTo720p: Middleware = (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   console.log("convert to 720p running");
   for (const file in files) {
-    const nameAndExtension = extension(files[file].originalname);
+    const nameAndExtension = extension(files[file].filename);
 
     //Skip if not a video
     if (
       !videoExtensions.includes(nameAndExtension[1]) &&
       nameAndExtension[1] !== ".gif"
     ) {
-      console.log(`${files[file].originalname} is not a video file`);
+      console.log(`${files[file].filename} is not a video file`);
       console.log(nameAndExtension[1]);
       continue;
     }
 
-    console.log(`Creating 720p for ${files[file].originalname}`);
+    console.log(`Creating 720p for ${files[file].filename}`);
 
     ffmpegDownscale(
       `uploads/${nameAndExtension[0]}${nameAndExtension[1]}`,

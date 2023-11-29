@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /* eslint-env browser: true */
 
-let files;
+let newMediaList;
 
 function copyURI(evt) {
   evt.preventDefault();
@@ -221,6 +221,10 @@ searchInput.addEventListener("input", () => {
   });
 });
 
+function p(num) {
+  return `${(num * 100).toFixed(2)}%`;
+}
+
 function checkFileAvailability(filePath) {
   const checkFile = () => {
     console.log(`Checking if ${filePath} is processed...`);
@@ -238,14 +242,14 @@ function checkFileAvailability(filePath) {
         }
       })
       .then((jsonData) => {
-        // Handle your JSON data here
         console.log(jsonData);
+        document.getElementById(`spinner-${filePath}`).innerText = `Optimizing Video for Sharing: ${p(jsonData.progress)} done`;
       })
       .catch((error) => console.error("Error:", error));
   };
 
   checkFile();
-  const interval = setInterval(checkFile, 5000);
+  const interval = setInterval(checkFile, 1000);
 }
 
 function createVideoElement(filePath) {
@@ -259,20 +263,9 @@ function createVideoElement(filePath) {
   document.getElementById(`spinner-${filePath}`).style.display = "none";
 }
 
-async function updateMediaList() {
-  try {
-    const response = await fetch("/media-list");
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    const data = await response.text();
-
-    document.getElementById("embedder-list").innerHTML = data;
-    htmx.process(document.body);
-  } catch (error) {
-    console.error("There was a problem with the fetch operation:", error);
-  }
+function updateMediaList() {
+  htmx.ajax("GET", "/media-list", {target: "#embedder-list", swap: "innerHTML"});
+  htmx.process(document.body);
 }
 
 function refreshMediaList(files) {

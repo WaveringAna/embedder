@@ -13,7 +13,6 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="manifest" href="/site.webmanifest">
   <script src="https://unpkg.com/htmx.org@1.9.8"></script>
-
 </head>
 
 <body>
@@ -72,16 +71,8 @@
   <script src="/js/index.js"></script>
   <script>
    document.body.addEventListener('htmx:afterSettle', function(event) {
-     var swappedElement = event.target;
 
-     if (swappedElement.id === 'embedder-list' || swappedElement.closest('#embedder-list')) {
-       console.log('htmx:afterSwap', swappedElement.id);
-       files = JSON.parse('<%- JSON.stringify(files) %>');
-       refreshMediaList(files);
-       console.log(files);
-     }
    });
  </script>
 </body>
-
 </html>
