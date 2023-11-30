@@ -69,7 +69,7 @@ router.get(
 );
 
 router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
-  res.render("partials/_fileList", { user: req.user }); // Render only the file list partial
+  res.render("partials/_fileList", { user: req.user });
 });
 
 router.get(
@@ -81,17 +81,17 @@ router.get(
     let width;
     let height;
 
-    const nameAndExtension = extension(`uploads/${req.params.file}`);
+    const [filename, fileExtension] = extension(`uploads/${req.params.file}`);
     if (
-      nameAndExtension[1] == ".mp4" ||
-      nameAndExtension[1] == ".mov" ||
-      nameAndExtension[1] == ".webm" ||
-      nameAndExtension[1] == ".gif"
+      fileExtension == ".mp4" ||
+      fileExtension == ".mov" ||
+      fileExtension == ".webm" ||
+      fileExtension == ".gif"
     ) {
       const imageData = ffProbe(
         `uploads/${req.params.file}`,
-        nameAndExtension[0],
-        nameAndExtension[1]
+        filename,
+        fileExtension
       );
 
       width = (await imageData).streams[0].width;
@@ -147,18 +147,17 @@ router.get(
   [checkAuth],
   async (req: Request, res: Response, next: NextFunction) => {
     const filename: any = await getPath(req.params.id);
-    console.log(filename);
     const filePath = path.join(__dirname , "../../uploads/" + filename.path);
     const oembed = path.join(
       __dirname , "../../uploads/oembed-" + filename.path + ".json"
     );
 
-    const nameAndExtension = extension(filePath);
+    const [fileName, fileExtension] = extension(filePath);
     const filesToDelete = [filePath, oembed];
 
     if (
-      videoExtensions.includes(nameAndExtension[1]) ||
-      nameAndExtension[1] == ".gif"
+      videoExtensions.includes(fileExtension) ||
+      fileExtension == ".gif"
     ) {
       filesToDelete.push(
         path.join(__dirname , "../../uploads/720p-" + filename.path)
@@ -186,7 +185,10 @@ router.get(
           });
         });
       })
-    );
+    ).catch((err) => {
+      console.error("Error deleting files:", err);
+      return next(err);
+    });
 
     next();
   },

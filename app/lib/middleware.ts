@@ -6,7 +6,6 @@ import process from "process";
 import { extension, videoExtensions, imageExtensions, oembedObj } from "./lib";
 import { insertToDB } from "./db";
 import { ffmpegDownscale, ffProbe } from "./ffmpeg";
-import { ffprobe } from "fluent-ffmpeg";
 
 export const checkAuth: Middleware = (req, res, next) => {
   if (!req.user) {
@@ -49,8 +48,8 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
 export const createEmbedData: Middleware = async (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   for (const file in files) {
-    const nameAndExtension = extension(files[file].filename);
-    const isMedia = videoExtensions.includes(nameAndExtension[1]) || imageExtensions.includes(nameAndExtension[1]);
+    const [filename, fileExtension] = extension(files[file].filename);
+    const isMedia = videoExtensions.includes(fileExtension) || imageExtensions.includes(fileExtension);
 
     const oembed: oembedObj = {
       type: "video",
@@ -59,19 +58,18 @@ export const createEmbedData: Middleware = async (req, res, next) => {
       provider_url: "https://github.com/WaveringAna/embedder",
       cache_age: 86400,
       html: `<iframe src='${req.protocol}://${req.get("host")}/gifv/${
-        nameAndExtension[0]
-      }${nameAndExtension[1]}'></iframe>`
+        filename
+      }${fileExtension}'></iframe>`
     };
 
     if (isMedia) {
       let ffProbeData;
       try { ffProbeData = await ffProbe(
         `uploads/${files[file].filename}`,
-        nameAndExtension[0],
-        nameAndExtension[1],
+        filename,
+        fileExtension,
       ); } catch (error) {
         console.log(`Error: ${error}`);
-        console.log(nameAndExtension[1]);
       }
 
       oembed.width = ffProbeData.streams[0].width;
@@ -79,12 +77,12 @@ export const createEmbedData: Middleware = async (req, res, next) => {
     }
 
     fs.writeFile(
-      `uploads/oembed-${nameAndExtension[0]}${nameAndExtension[1]}.json`,
+      `uploads/oembed-${filename}${fileExtension}.json`,
       JSON.stringify(oembed),
       function (err) {
         if (err) return next(err);
         console.log(
-          `oembed file created ${nameAndExtension[0]}${nameAndExtension[1]}.json`,
+          `oembed file created ${filename}${fileExtension}.json`,
         );
       },
     );
@@ -97,24 +95,24 @@ export const convertTo720p: Middleware = (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   console.log("convert to 720p running");
   for (const file in files) {
-    const nameAndExtension = extension(files[file].filename);
+    const [filename, fileExtension] = extension(files[file].filename);
 
     //Skip if not a video
     if (
-      !videoExtensions.includes(nameAndExtension[1]) &&
-      nameAndExtension[1] !== ".gif"
+      !videoExtensions.includes(fileExtension) &&
+      fileExtension !== ".gif"
     ) {
       console.log(`${files[file].filename} is not a video file`);
-      console.log(nameAndExtension[1]);
+      console.log(fileExtension);
       continue;
     }
 
     console.log(`Creating 720p for ${files[file].filename}`);
 
     ffmpegDownscale(
-      `uploads/${nameAndExtension[0]}${nameAndExtension[1]}`,
-      nameAndExtension[0],
-      nameAndExtension[1],
+      `uploads/${filename}${fileExtension}`,
+      filename,
+      fileExtension,
     )
       .then(() => {
         //Nothing for now, can fire event flag that it is done to front end when react conversion is done

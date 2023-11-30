@@ -23,11 +23,11 @@ export const fileStorage = multer.diskStorage({
     file: Express.Multer.File,
     callback: FileNameCallback,
   ): void => {
-    const nameAndExtension = extension(file.originalname);
+    const [filename, fileExtension] = extension(file.originalname);
     console.log(`Uploading ${file}`);
     db.all(
       "SELECT * FROM media WHERE path = ?",
-      [nameAndExtension[0] + nameAndExtension[1]],
+      [filename + fileExtension],
       (err: Error, exists: []) => {
         if (err) {
           console.log(err);
@@ -43,12 +43,12 @@ export const fileStorage = multer.diskStorage({
           ) {
             callback(
               null,
-              nameAndExtension[0] + "-" + suffix + nameAndExtension[1],
+              filename + "-" + suffix + fileExtension,
             );
           } else {
             callback(
               null,
-              request.body.title + "-" + suffix + nameAndExtension[1],
+              request.body.title + "-" + suffix + fileExtension,
             );
           }
         } else {
@@ -57,9 +57,9 @@ export const fileStorage = multer.diskStorage({
             request.body.title == null ||
             request.body.title == undefined
           ) {
-            callback(null, nameAndExtension[0] + nameAndExtension[1]);
+            callback(null, filename + fileExtension);
           } else {
-            callback(null, request.body.title + nameAndExtension[1]);
+            callback(null, request.body.title + fileExtension);
           }
         }
       },

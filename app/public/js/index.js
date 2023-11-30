@@ -255,8 +255,8 @@ function checkFileAvailability(filePath) {
 function createVideoElement(filePath) {
   const videoContainer = document.getElementById(`video-${filePath}`);
   videoContainer.outerHTML = `
-    <video id='video-${filePath}' class="image" autoplay loop muted playsinline loading="lazy">
-      <source src="/uploads/720p-${filePath}" loading="lazy">
+    <video id='video-${filePath}' class="image" autoplay loop muted playsinline>
+      <source src="/uploads/720p-${filePath}">
     </video>
   `;
   videoContainer.style.display = "block";

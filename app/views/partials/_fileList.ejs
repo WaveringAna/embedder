@@ -23,8 +23,8 @@ const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff
 
     <!-- Hidden video container to be displayed later -->
     <div class="video">
-      <video id="video-<%= file.path %>" class="image" autoplay loop muted playsinline loading="lazy" style="display: none;">
-        <source src="/uploads/720p-<%= file.path %>" loading="lazy">
+      <video id="video-<%= file.path %>" class="image" autoplay loop muted playsinline style="display: none;">
+        <source src="/uploads/720p-<%= file.path %>">
       </video>
       <div class="overlay">
         <% if(user.username == "admin" && file.username != "admin") { %>
