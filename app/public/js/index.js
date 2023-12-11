@@ -1,7 +1,29 @@
-/* eslint-disable no-undef */
+/* eslint no-use-before-define: 0 */
 /* eslint-env browser: true */
 
 let newMediaList;
+
+const videoExtensions = [
+  ".mp4",
+  ".mov",
+  ".avi",
+  ".flv",
+  ".mkv",
+  ".wmv",
+  ".webm",
+];
+
+const imageExtensions = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".bmp",
+  ".svg",
+  ".tiff",
+  ".webp",
+];
+
 
 function copyURI(evt) {
   evt.preventDefault();

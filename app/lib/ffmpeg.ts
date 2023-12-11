@@ -123,7 +123,7 @@ export const ffmpegDownscale = (
   path: string,
   filename: string,
   extension: string,
-) => {
+): Promise<void> => {
   const startTime = Date.now();
   const outputOptions = [
     "-vf",
@@ -143,8 +143,11 @@ export const ffmpegDownscale = (
       .input(path)
       .outputOptions(outputOptions)
       .output(`uploads/720p-${filename}${extension}`)
-      .on("progress", function(progress) {
-        fs.writeFileSync(progressFile, JSON.stringify({ progress: progress.percent / 100 }));
+      .on("progress", function (progress) {
+        fs.writeFileSync(
+          progressFile,
+          JSON.stringify({ progress: progress.percent / 100 }),
+        );
       })
       .on("end", () => {
         console.log(
@@ -189,7 +192,7 @@ export const ffmpegConvert = (
   path: string,
   filename: string,
   extension: string,
-) => {
+): Promise<void> => {
   const startTime = Date.now();
   const outputOptions = [
     "-vf",
@@ -225,8 +228,11 @@ export const ffmpegConvert = (
       .output("uploads/")
       .outputFormat(outputFormat)
       .output(`uploads/${filename}${outputFormat}`)
-      .on("progress", function(progress) {
-        fs.writeFileSync(progressFile, JSON.stringify({ progress: progress.percent / 100 }));
+      .on("progress", function (progress) {
+        fs.writeFileSync(
+          progressFile,
+          JSON.stringify({ progress: progress.percent / 100 }),
+        );
       })
       .on("end", function () {
         console.log(
@@ -246,7 +252,10 @@ export const ffProbe = async (
   extension: string,
 ) => {
   return new Promise<FfprobeData>((resolve, reject) => {
-    if (!videoExtensions.includes(extension) && !imageExtensions.includes(extension)) {
+    if (
+      !videoExtensions.includes(extension) &&
+      !imageExtensions.includes(extension)
+    ) {
       console.log(`Extension is ${extension}`);
       reject(`Submitted file is neither a video nor an image: ${path}`);
     }

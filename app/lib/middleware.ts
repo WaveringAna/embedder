@@ -44,7 +44,14 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
   next();
 };
 
-/**Creates oembed json file for embed metadata */
+/**
+ * Creates oembed data for uploaded files
+ * 
+ * @param {Express Request Object} Express request object
+ * @param {Express Response Object} Express response object
+ * @param {Express NextFunction variable} Express next function
+ * 
+ */
 export const createEmbedData: Middleware = async (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   for (const file in files) {
@@ -90,7 +97,14 @@ export const createEmbedData: Middleware = async (req, res, next) => {
   next();
 };
 
-/**Creates a 720p copy of video for smaller file */
+/**
+ * Creates a 720p copy of uploaded videos
+ * 
+ * @param {Express Request Object} req Express request object
+ * @param {Express Response Object} res Express response object
+ * @param {Express NextFunction} next Express next function
+ * 
+ */
 export const convertTo720p: Middleware = (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   console.log("convert to 720p running");
@@ -103,7 +117,6 @@ export const convertTo720p: Middleware = (req, res, next) => {
       fileExtension !== ".gif"
     ) {
       console.log(`${files[file].filename} is not a video file`);
-      console.log(fileExtension);
       continue;
     }
 

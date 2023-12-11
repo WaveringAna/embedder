@@ -33,6 +33,7 @@ export const fileStorage = multer.diskStorage({
           console.log(err);
           callback(err, null);
         }
+        
         if (exists.length != 0) {
           const suffix = new Date().getTime() / 1000;
 
@@ -41,15 +42,9 @@ export const fileStorage = multer.diskStorage({
             request.body.title == null ||
             request.body.title == undefined
           ) {
-            callback(
-              null,
-              filename + "-" + suffix + fileExtension,
-            );
+            callback(null, filename + "-" + suffix + fileExtension);
           } else {
-            callback(
-              null,
-              request.body.title + "-" + suffix + fileExtension,
-            );
+            callback(null, request.body.title + "-" + suffix + fileExtension);
           }
         } else {
           if (
@@ -67,7 +62,7 @@ export const fileStorage = multer.diskStorage({
   },
 });
 
-export const allowedMimeTypes = [
+export let allowedMimeTypes = [
   "image/png",
   "image/jpg",
   "image/jpeg",
@@ -80,6 +75,10 @@ export const allowedMimeTypes = [
   "audio/ogg",
 ];
 
+export const setAllowedMimeTypes = (mimeTypes: string[]): void => {
+  allowedMimeTypes = mimeTypes;
+};
+
 export const fileFilter = (
   request: Request,
   file: Express.Multer.File,
@@ -91,4 +90,3 @@ export const fileFilter = (
     callback(null, false);
   }
 };
-

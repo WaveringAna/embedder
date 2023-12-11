@@ -58,7 +58,7 @@ Enabled at `/upload`. Requires authentication with key. `expire` key specifies d
 ### Using Docker
 
 ```bash
-docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.9.2
+docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.10.1
 ```
 
 ### Docker Compose
@@ -76,7 +76,7 @@ services:
     volumes:
       - ./db:/var/db
       - ./uploads:/uploads
-    image: ghcr.io/waveringana/embedder:1.9.2
+    image: ghcr.io/waveringana/embedder:1.10.1
 ```
 
 ## 📜 License
