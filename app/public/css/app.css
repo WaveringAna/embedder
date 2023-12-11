@@ -97,7 +97,8 @@
 }
 
 .nav button {
-  height: 14px;
+  height: 40px;
+  padding-top: 10px;
 }
 
 .nav button:hover {
