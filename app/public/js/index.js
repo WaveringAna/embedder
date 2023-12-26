@@ -302,23 +302,3 @@ function refreshMediaList(files) {
     }
   });
 }
-
-const videoExtensions = [
-  ".mp4",
-  ".mov",
-  ".avi",
-  ".flv",
-  ".mkv",
-  ".wmv",
-  ".webm",
-];
-const imageExtensions = [
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".gif",
-  ".bmp",
-  ".svg",
-  ".tiff",
-  ".webp",
-];
