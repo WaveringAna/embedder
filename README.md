@@ -55,10 +55,24 @@ Enabled at `/upload`. Requires authentication with key. `expire` key specifies d
 }
 ```
 
+### Configuration
+
+This project uses environmental variables to configure functions.
+
+`EBPASS` configures the password for the admin account.
+
+`EBAPI_KEY` configures the key for API uploading support typically used for ShareX.
+
+`EBPORT` configures the port the server runs on.
+
+`EB_FFMPEG_PATH` and `EB_FFPROBE_PATH` configures the path to the ffmpeg and ffprobe binaries respectively. If not set, it uses installed binaries set in the PATH. If none are detected, it will default to preinstalled binaries from the [node-ffmpeg-installer](https://www.npmjs.com/package/@ffmpeg-installer/ffmpeg) package.
+
+`EB_RANDOMIZE_NAMES` configures whether or not to randomize file names. If set to `true`, file names will be randomized. If not set or set to false, it will be `false`.
+
 ### Using Docker
 
 ```bash
-docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.10.2
+docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.10.3
 ```
 
 ### Docker Compose
@@ -76,7 +90,7 @@ services:
     volumes:
       - ./db:/var/db
       - ./uploads:/uploads
-    image: ghcr.io/waveringana/embedder:1.10.2
+    image: ghcr.io/waveringana/embedder:1.10.3
 ```
 
 ## 📜 License

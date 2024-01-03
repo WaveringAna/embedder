@@ -1,4 +1,4 @@
-import { extension, videoExtensions, imageExtensions } from "./lib";
+import { videoExtensions, imageExtensions } from "./lib";
 
 import ffmpeg, { FfprobeData, ffprobe } from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";

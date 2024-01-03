@@ -1,7 +1,7 @@
 import { Request } from "express";
 import multer, { FileFilterCallback } from "multer";
 
-import { db, MediaRow } from "./db";
+import { db } from "./db";
 import { extension } from "./lib";
 
 export type DestinationCallback = (
@@ -9,6 +9,14 @@ export type DestinationCallback = (
   destination: string,
 ) => void;
 export type FileNameCallback = (error: Error | null, filename: string) => void;
+
+let randomizeNames = false;
+
+if (process.env["EB_RANDOMIZE_NAMES"] === "true") {
+  randomizeNames = true;
+}
+
+console.log(`Randomize names is set ${randomizeNames}`);
 
 export const fileStorage = multer.diskStorage({
   destination: (
@@ -33,29 +41,41 @@ export const fileStorage = multer.diskStorage({
           console.log(err);
           callback(err, null);
         }
-        
-        if (exists.length != 0) {
-          const suffix = new Date().getTime() / 1000;
 
-          if (
-            request.body.title == "" ||
-            request.body.title == null ||
-            request.body.title == undefined
-          ) {
-            callback(null, filename + "-" + suffix + fileExtension);
-          } else {
-            callback(null, request.body.title + "-" + suffix + fileExtension);
-          }
-        } else {
-          if (
-            request.body.title == "" ||
-            request.body.title == null ||
-            request.body.title == undefined
-          ) {
-            callback(null, filename + fileExtension);
-          } else {
-            callback(null, request.body.title + fileExtension);
-          }
+        let filenameSet = true;
+        let existsBool = true;
+
+        if (
+          request.body.title == "" ||
+          request.body.title == null ||
+          request.body.title == undefined
+        ) {
+          filenameSet = false;
+        }
+
+        if (exists.length == 0) {
+          existsBool = false;
+        }
+
+        if (randomizeNames) {
+          //Chance of collision is extremely low, not worth checking for
+          callback(null, Math.random().toString(36).slice(2, 10) + fileExtension);
+          return;
+        }
+        
+        if (filenameSet && existsBool) {
+          callback(null, request.body.title + fileExtension);
+          return;
+        }
+
+        if (!filenameSet && existsBool) {
+          callback(null, filename + fileExtension);
+          return;
+        }
+
+        if (filenameSet && !existsBool) {
+          callback(null, request.body.title + fileExtension);
+          return;
         }
       },
     );
