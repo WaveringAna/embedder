@@ -8,6 +8,7 @@ export type DestinationCallback = (
   error: Error | null,
   destination: string,
 ) => void;
+
 export type FileNameCallback = (error: Error | null, filename: string) => void;
 
 let randomizeNames = false;
@@ -43,38 +44,53 @@ export const fileStorage = multer.diskStorage({
         }
 
         let filenameSet = true;
-        let existsBool = true;
+        let existsBool = false;
+        let suffix: number;
 
         if (
-          request.body.title == "" ||
-          request.body.title == null ||
-          request.body.title == undefined
+          request.body.title != "" ||
+          request.body.title != null ||
+          request.body.title != undefined
         ) {
           filenameSet = false;
         }
-
-        if (exists.length == 0) {
-          existsBool = false;
+        
+        if (exists.length != 0) {
+          existsBool = true;
+          suffix = new Date().getTime() / 1000;
         }
 
+        console.log(request.body.title);
+
         if (randomizeNames) {
+          //Random string of 8 alphanumeric characters
           //Chance of collision is extremely low, not worth checking for
+          console.log("Randomizing name");
           callback(null, Math.random().toString(36).slice(2, 10) + fileExtension);
           return;
         }
         
         if (filenameSet && existsBool) {
-          callback(null, request.body.title + fileExtension);
+          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          callback(null, request.body.title + "-" + suffix + fileExtension);
           return;
         }
 
         if (!filenameSet && existsBool) {
-          callback(null, filename + fileExtension);
+          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          callback(null, filename + "-" + suffix + fileExtension);
           return;
         }
 
         if (filenameSet && !existsBool) {
+          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
           callback(null, request.body.title + fileExtension);
+          return;
+        }
+
+        if (!filenameSet && !existsBool) {
+          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          callback(null, filename + fileExtension);
           return;
         }
       },
