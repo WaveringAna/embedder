@@ -1,4 +1,3 @@
-/* eslint no-use-before-define: 0 */
 /* eslint-env browser: true */
 
 let newMediaList;
@@ -31,11 +30,9 @@ function copyURI(evt) {
     .writeText(absolutePath(evt.target.getAttribute("src")))
     .then(
       () => {
-        /* clipboard successfully set */
         console.log("copied");
       },
       () => {
-        /* clipboard write failed */
         console.log("failed");
       }
     );
@@ -189,17 +186,11 @@ function openFullSize(imageUrl) {
   video.controls = true;
 
   if (
-    extension(imageUrl) == ".jpg" ||
-    extension(imageUrl) == ".png" ||
-    extension(imageUrl) == ".gif" ||
-    extension(imageUrl) == ".jpeg" ||
-    extension(imageUrl) == ".webp"
+    imageExtensions.includes(extension(imageUrl))
   ) {
     modal.appendChild(img);
   } else if (
-    extension(imageUrl) == ".mp4" ||
-    extension(imageUrl) == ".webm" ||
-    extension(imageUrl) == ".mov"
+    videoExtensions.includes(extension(imageUrl))
   ) {
     modal.appendChild(video);
   }
@@ -254,18 +245,18 @@ function checkFileAvailability(filePath) {
       .then((response) => {
         if (response.ok) {
           console.log(`${filePath} still processing`);
-          return response.json();
-        } else {
+          return response.json().then(json => {
+            document.getElementById(`spinner-${filePath}`).innerText = `Optimizing Video for Sharing: ${p(json.progress)} done`;
+            return response;
+          })
+        } else if (response.status === 404) {
           console.log(`${filePath} finished processing`);
           console.log(`/uploads/720p-${filePath}-progress.json finished`);
           clearInterval(interval);
           createVideoElement(filePath);
-          return;
+        } else {
+          throw new Error(`HTTP error: Status code ${response.status}`);
         }
-      })
-      .then((jsonData) => {
-        console.log(jsonData);
-        document.getElementById(`spinner-${filePath}`).innerText = `Optimizing Video for Sharing: ${p(jsonData.progress)} done`;
       })
       .catch((error) => console.error("Error:", error));
   };
