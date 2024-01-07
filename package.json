@@ -26,7 +26,8 @@
     "copy-files": "copyfiles -a -u 1 app/public/* app/views/* app/public/**/* app/views/**/* dist/",
     "tsc": "tsc",
     "postinstall": "npm run tsc && npm run copy-files",
-    "build": "npm run clean && npm run copy-files && npm run tsc"
+    "build": "npm run clean && npm run copy-files && npm run tsc",
+    "dev": "ts-node-dev --respawn --watch ./app/views/*.ejs --transpile-only ./app/app.ts"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

@@ -1,4 +1,4 @@
-const version = 1.9;
+const version = 1.12;
 
 import "dotenv";
 
@@ -16,6 +16,7 @@ import path from "path";
 import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
+import settingsRouter from "./routes/settings";
 
 import {db, expire, createDatabase, updateDatabase, MediaRow} from "./lib/db";
 
@@ -69,7 +70,7 @@ function onError(error: any) {
 
 // Check if there is an existing DB or not, then check if it needs to be updated to new schema
 db.get("SELECT * FROM sqlite_master WHERE name ='users' and type='table'", async (err, row) => {
-  if (!row) createDatabase(2); 
+  if (!row) createDatabase(3); 
   else checkVersion();
 });
 
@@ -77,12 +78,11 @@ function checkVersion () {
   db.get("PRAGMA user_version", (err: Error, row: any) => {
     if (row && row.user_version) {
       const version = row.user_version;
-      if (version != 2) console.log("DATABASE IS OUTDATED");
-      //no future releases yet, and else statement handles version 1
-      //updateDatabase(version, 2);
+      if (version != 3) console.log("DATABASE IS OUTDATED");
+      updateDatabase(version, 3);
     } else {
       // Because ver 1 does not have user_version set, we can safely assume that it is ver 1
-      updateDatabase(1, 2);
+      updateDatabase(1, 3);
     }
   });
 }
@@ -124,6 +124,7 @@ app.use(passport.authenticate("session"));
 app.use("/", indexRouter);
 app.use("/", authRouter);
 app.use("/", adduserRouter);
+app.use("/", settingsRouter);
 
 app.use("/uploads", express.static("uploads"));
 
@@ -141,6 +142,8 @@ async function prune () {
     fs.unlink(`uploads/${row.path}`, (err) => {
       if (err && err.errno == -4058) {
         console.log("File already deleted");
+      } else {
+        if (err) console.log(err);
       }
     });
   });

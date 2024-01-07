@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Embedder</title>
+	<link rel="stylesheet" href="/css/base.css">
+	<link rel="stylesheet" href="/css/index.css">
+	<link rel="stylesheet" href="/css/login.css">
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body>
+	<style>
+		section .settings {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin: 0 auto;
+			margin-bottom: 10px;
+		}
+	</style>
+	<section class="prompt">
+		<h3><a href="/">Embedder</a></h3>
+		<h1>Settings</h1>
+		<form action="/settings" method="post">
+			<section class="settings">
+				<label for="fileNaming">How do you want to name files?</label>
+				<select id="fileNaming" name="fileNaming">
+					<option value="original">Original Filename</option>
+					<option value="random">Random</option>
+				</select>
+			</section>
+			<% if (user.name == "admin" || user.username == "admin") { %>
+				<section class="settings">
+					<label for="downscaling">Allow video downscaling for better video embedding?</label>
+					<select id="downscaling" name="downscaling">
+						<option value="true">Yes</option>
+						<option value="false">No</option>
+					</select>
+				</section>
+				<section class="settings">
+					<label for="userList">List of guest accounts: </label>
+					<span><%= JSON.stringify(userList.map(obj => obj.username)) %></span>
+				</section>
+			<% } %>
+			<button type="submit">Apply Settings</button>
+		</form>
+		<hr>
+	</section>
+	<footer class="info">
+		<p><a href="https://l.nekomimi.pet/project">Created by Wavering Ana</a></p>
+		<p><a href="https://github.com/WaveringAna/Embedder">Github</a></p>
+	</footer>
+</body>
+
+</html>

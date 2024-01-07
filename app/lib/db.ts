@@ -31,6 +31,14 @@ export function createDatabase(version: number) {
   )"
   );
 
+  db.run(
+    "CREATE TABLE IF NOT EXISTS settings ( \
+    id INTEGER PRIMARY KEY, \
+    downsclaing BOOLEAN, \
+    namerandomization BOOLEAN \
+  )"
+  );
+
   db.run(`PRAGMA user_version = ${version}`);
 }
 
@@ -38,9 +46,10 @@ export function createDatabase(version: number) {
 export function updateDatabase(oldVersion: number, newVersion: number) {
   if (oldVersion == 1) {
     console.log(`Updating database from ${oldVersion} to ${newVersion}`);
-    db.run("PRAGMA user_version = 2", (err) => {
+    db.run("PRAGMA user_version = 3", (err) => {
       if (err) return;
     });
+    
     db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
       if (err) return;
     });
@@ -48,6 +57,20 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
     db.run("ALTER TABLE users ADD COLUMN expire TEXT", (err) => {
       if (err) return;
     });
+  }
+  if (oldVersion == 2) {
+    console.log(`Updating database from ${oldVersion} to ${newVersion}`);
+    db.run("PRAGMA user_version = 3", (err) => {
+      if (err) return;
+    });
+
+    db.run(
+      "CREATE TABLE IF NOT EXISTS settings ( \
+      id INTEGER PRIMARY KEY, \
+      downsclaing BOOLEAN, \
+      namerandomization BOOLEAN \
+    )"
+    );
   }
 }
 
