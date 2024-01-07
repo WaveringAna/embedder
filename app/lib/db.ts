@@ -57,6 +57,14 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
     db.run("ALTER TABLE users ADD COLUMN expire TEXT", (err) => {
       if (err) return;
     });
+
+    db.run(
+      "CREATE TABLE IF NOT EXISTS settings ( \
+      id INTEGER PRIMARY KEY, \
+      downsclaing BOOLEAN, \
+      namerandomization BOOLEAN \
+    )"
+    );
   }
   if (oldVersion == 2) {
     console.log(`Updating database from ${oldVersion} to ${newVersion}`);
