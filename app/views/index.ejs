@@ -33,7 +33,11 @@
           </li>
           <% } %>
         </ul>
-        <input type="text" id="search" name="search" placeholder="Search" value="" />
+        <form autocomplete="one-time-code">
+          <!-- Chrome is stupid and will autofill the user name into the search bar sometimes-->
+          <input type="text" name="user" value="<%= user.username %>" style="display:none;"/>
+          <input autocomplete="one-time-code" type="text" id="search" name="search" placeholder="Search" value="" />
+        </form>
       </nav>
     </header>
     <form hx-post="/" encType="multipart/form-data" hx-target="#embedder-list" hx-swap="innerHTML">
