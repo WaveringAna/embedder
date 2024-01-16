@@ -19,7 +19,7 @@ export function createDatabase(version: number) {
     expire INTEGER, \
     salt BLOB \
   )",
-    () => createUser("admin", process.env.EBPASS || "changeme")
+    () => createUser("admin", process.env.EBPASS || "changeme"),
   );
 
   db.run(
@@ -28,7 +28,7 @@ export function createDatabase(version: number) {
     path TEXT NOT NULL, \
     expire INTEGER, \
     username TEXT \
-  )"
+  )",
   );
 
   db.run(
@@ -36,7 +36,7 @@ export function createDatabase(version: number) {
     id INTEGER PRIMARY KEY, \
     downsclaing BOOLEAN, \
     namerandomization BOOLEAN \
-  )"
+  )",
   );
 
   db.run(`PRAGMA user_version = ${version}`);
@@ -49,7 +49,7 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
     db.run("PRAGMA user_version = 3", (err) => {
       if (err) return;
     });
-    
+
     db.run("ALTER TABLE media ADD COLUMN username TEXT", (err) => {
       if (err) return;
     });
@@ -63,7 +63,7 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
       id INTEGER PRIMARY KEY, \
       downsclaing BOOLEAN, \
       namerandomization BOOLEAN \
-    )"
+    )",
     );
   }
   if (oldVersion == 2) {
@@ -77,7 +77,7 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
       id INTEGER PRIMARY KEY, \
       downsclaing BOOLEAN, \
       namerandomization BOOLEAN \
-    )"
+    )",
     );
   }
 }
@@ -86,7 +86,7 @@ export function updateDatabase(oldVersion: number, newVersion: number) {
 export function insertToDB(
   filename: string,
   expireDate: Date,
-  username: string
+  username: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const params: MediaParams = [filename, expireDate, username];
@@ -105,7 +105,7 @@ export function insertToDB(
             console.log(`It will expire on ${expireDate}`);
           resolve();
         }
-      }
+      },
     );
   });
 }
@@ -131,7 +131,7 @@ export function createUser(username: string, password: string) {
 
     db.run(
       "INSERT OR IGNORE INTO users (username, hashed_password, salt) VALUES (?, ?, ?)",
-      [username, crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256"), salt]
+      [username, crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256"), salt],
     );
 
     resolve(null);

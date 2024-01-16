@@ -46,17 +46,19 @@ export const checkSharexAuth: Middleware = (req, res, next) => {
 
 /**
  * Creates oembed data for uploaded files
- * 
+ *
  * @param {Express Request Object} Express request object
  * @param {Express Response Object} Express response object
  * @param {Express NextFunction variable} Express next function
- * 
+ *
  */
 export const createEmbedData: Middleware = async (req, res, next) => {
   const files = req.files as Express.Multer.File[];
   for (const file in files) {
     const [filename, fileExtension] = extension(files[file].filename);
-    const isMedia = videoExtensions.includes(fileExtension) || imageExtensions.includes(fileExtension);
+    const isMedia =
+      videoExtensions.includes(fileExtension) ||
+      imageExtensions.includes(fileExtension);
 
     const oembed: oembedObj = {
       type: "video",
@@ -64,18 +66,20 @@ export const createEmbedData: Middleware = async (req, res, next) => {
       provider_name: "embedder",
       provider_url: "https://github.com/WaveringAna/embedder",
       cache_age: 86400,
-      html: `<iframe src='${req.protocol}://${req.get("host")}/gifv/${
-        filename
-      }${fileExtension}'></iframe>`
+      html: `<iframe src='${req.protocol}://${req.get(
+        "host",
+      )}/gifv/${filename}${fileExtension}'></iframe>`,
     };
 
     if (isMedia) {
       let ffProbeData;
-      try { ffProbeData = await ffProbe(
-        `uploads/${files[file].filename}`,
-        filename,
-        fileExtension,
-      ); } catch (error) {
+      try {
+        ffProbeData = await ffProbe(
+          `uploads/${files[file].filename}`,
+          filename,
+          fileExtension,
+        );
+      } catch (error) {
         console.log(`Error: ${error}`);
       }
 
@@ -88,9 +92,7 @@ export const createEmbedData: Middleware = async (req, res, next) => {
       JSON.stringify(oembed),
       function (err) {
         if (err) return next(err);
-        console.log(
-          `oembed file created ${filename}${fileExtension}.json`,
-        );
+        console.log(`oembed file created ${filename}${fileExtension}.json`);
       },
     );
   }
@@ -99,11 +101,11 @@ export const createEmbedData: Middleware = async (req, res, next) => {
 
 /**
  * Creates a 720p copy of uploaded videos
- * 
+ *
  * @param {Express Request Object} req Express request object
  * @param {Express Response Object} res Express response object
  * @param {Express NextFunction} next Express next function
- * 
+ *
  */
 export const convertTo720p: Middleware = (req, res, next) => {
   const files = req.files as Express.Multer.File[];
@@ -112,10 +114,7 @@ export const convertTo720p: Middleware = (req, res, next) => {
     const [filename, fileExtension] = extension(files[file].filename);
 
     //Skip if not a video
-    if (
-      !videoExtensions.includes(fileExtension) &&
-      fileExtension !== ".gif"
-    ) {
+    if (!videoExtensions.includes(fileExtension) && fileExtension !== ".gif") {
       console.log(`${files[file].filename} is not a video file`);
       continue;
     }
@@ -153,7 +152,9 @@ export const handleUpload: Middleware = async (req, res, next) => {
 
   try {
     if (files instanceof Array) {
-      await Promise.all(files.map(file => insertToDB(file.filename, expireDate, username)));
+      await Promise.all(
+        files.map((file) => insertToDB(file.filename, expireDate, username)),
+      );
     } else {
       await insertToDB(files.filename, expireDate, username);
     }

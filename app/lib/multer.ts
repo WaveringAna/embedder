@@ -54,7 +54,7 @@ export const fileStorage = multer.diskStorage({
         ) {
           filenameSet = false;
         }
-        
+
         if (exists.length != 0) {
           existsBool = true;
           suffix = new Date().getTime() / 1000;
@@ -66,30 +66,41 @@ export const fileStorage = multer.diskStorage({
           //Random string of 8 alphanumeric characters
           //Chance of collision is extremely low, not worth checking for
           console.log("Randomizing name");
-          callback(null, Math.random().toString(36).slice(2, 10) + fileExtension);
+          callback(
+            null,
+            Math.random().toString(36).slice(2, 10) + fileExtension,
+          );
           return;
         }
-        
+
         if (filenameSet && existsBool) {
-          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          console.log(
+            `filenameSet is ${filenameSet} and existsBool is ${existsBool}`,
+          );
           callback(null, request.body.title + "-" + suffix + fileExtension);
           return;
         }
 
         if (!filenameSet && existsBool) {
-          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          console.log(
+            `filenameSet is ${filenameSet} and existsBool is ${existsBool}`,
+          );
           callback(null, filename + "-" + suffix + fileExtension);
           return;
         }
 
         if (filenameSet && !existsBool) {
-          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          console.log(
+            `filenameSet is ${filenameSet} and existsBool is ${existsBool}`,
+          );
           callback(null, request.body.title + fileExtension);
           return;
         }
 
         if (!filenameSet && !existsBool) {
-          console.log(`filenameSet is ${filenameSet} and existsBool is ${existsBool}`);
+          console.log(
+            `filenameSet is ${filenameSet} and existsBool is ${existsBool}`,
+          );
           callback(null, filename + fileExtension);
           return;
         }
