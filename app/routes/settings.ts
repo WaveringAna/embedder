@@ -20,7 +20,7 @@ const fetchUsers = (): Promise<[UserRow]> => {
             resolve(rows);
         });
     });
-}
+};
 
 const fetchSettings: Middleware = async (req, res, next) => {
     res.locals.users = req.user.username == "admin" ? await fetchUsers() : null;

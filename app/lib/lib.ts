@@ -11,11 +11,11 @@ declare global {
 }
 /**Splits a file name into its name and then its extension */
 export function extension(str: string) {
-  const file = str.split("/").pop();
-  return [
-    file.substr(0, file.lastIndexOf(".")),
-    file.substr(file.lastIndexOf("."), file.length).toLowerCase(),
-  ];
+    const file = str.split("/").pop();
+    return [
+        file.substr(0, file.lastIndexOf(".")),
+        file.substr(file.lastIndexOf("."), file.length).toLowerCase(),
+    ];
 }
 /**Type for user data */
 export interface User {
@@ -37,21 +37,21 @@ export interface oembedObj {
 }
 
 export const videoExtensions = [
-  ".mp4",
-  ".mov",
-  ".avi",
-  ".flv",
-  ".mkv",
-  ".wmv",
-  ".webm",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".flv",
+    ".mkv",
+    ".wmv",
+    ".webm",
 ];
 export const imageExtensions = [
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".gif",
-  ".bmp",
-  ".svg",
-  ".tiff",
-  ".webp",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".bmp",
+    ".svg",
+    ".tiff",
+    ".webp",
 ];

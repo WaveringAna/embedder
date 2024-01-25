@@ -37,7 +37,7 @@ export let currentEncoding: EncodingType = EncodingType.CPU;
  * @param {EncodingType} type - The encoding type to set.
  */
 export const setEncodingType = (type: EncodingType) => {
-  currentEncoding = type;
+    currentEncoding = type;
 };
 
 /**
@@ -52,31 +52,31 @@ export const setEncodingType = (type: EncodingType) => {
  * @throws Will throw an error if the executable is not found and the installer path is not available.
  */
 const getExecutablePath = (
-  envVar: string,
-  executable: string,
-  installer: { path: string },
+    envVar: string,
+    executable: string,
+    installer: { path: string },
 ): string => {
-  if (process.env[envVar]) {
-    return process.env[envVar];
-  }
+    if (process.env[envVar]) {
+        return process.env[envVar];
+    }
 
-  try {
-    return which.sync(executable);
-  } catch (error) {
-    return installer.path;
-  }
+    try {
+        return which.sync(executable);
+    } catch (error) {
+        return installer.path;
+    }
 };
 
 const ffmpegPath = getExecutablePath(
-  "EB_FFMPEG_PATH",
-  "ffmpeg",
-  ffmpegInstaller,
+    "EB_FFMPEG_PATH",
+    "ffmpeg",
+    ffmpegInstaller,
 );
 
 const ffprobePath = getExecutablePath(
-  "EB_FFPROBE_PATH",
-  "ffprobe",
-  ffprobeInstaller,
+    "EB_FFPROBE_PATH",
+    "ffprobe",
+    ffprobeInstaller,
 );
 
 console.log(`Using ffmpeg from path: ${ffmpegPath}`);
@@ -86,20 +86,20 @@ ffmpeg.setFfmpegPath(ffmpegPath!);
 ffmpeg.setFfprobePath(ffprobePath!);
 
 const checkEnvForEncoder = () => {
-  const envEncoder = process.env.EB_ENCODER?.toUpperCase();
+    const envEncoder = process.env.EB_ENCODER?.toUpperCase();
 
-  if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
-    setEncodingType(
+    if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
+        setEncodingType(
       EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType,
-    );
-    console.log(
-      `Setting encoding type to ${envEncoder} based on environment variable.`,
-    );
-  } else if (envEncoder) {
-    console.warn(
-      `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
-    );
-  }
+        );
+        console.log(
+            `Setting encoding type to ${envEncoder} based on environment variable.`,
+        );
+    } else if (envEncoder) {
+        console.warn(
+            `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
+        );
+    }
 };
 
 checkEnvForEncoder();
@@ -120,57 +120,57 @@ checkEnvForEncoder();
  * });
  */
 export const ffmpegDownscale = (
-  path: string,
-  filename: string,
-  extension: string,
+    path: string,
+    filename: string,
+    extension: string,
 ): Promise<void> => {
-  const startTime = Date.now();
-  const outputOptions = [
-    "-vf",
-    "scale=-2:720",
-    "-c:v",
-    currentEncoding,
-    "-c:a",
-    "copy",
-    "-pix_fmt",
-    "yuv420p",
-  ];
+    const startTime = Date.now();
+    const outputOptions = [
+        "-vf",
+        "scale=-2:720",
+        "-c:v",
+        currentEncoding,
+        "-c:a",
+        "copy",
+        "-pix_fmt",
+        "yuv420p",
+    ];
 
-  return new Promise<void>((resolve, reject) => {
-    const progressFile = `uploads/${filename}${extension}-progress.json`;
+    return new Promise<void>((resolve, reject) => {
+        const progressFile = `uploads/${filename}${extension}-progress.json`;
 
-    ffmpeg()
-      .input(path)
-      .outputOptions(outputOptions)
-      .output(`uploads/720p-${filename}${extension}`)
-      .on("progress", function (progress) {
-        fs.writeFileSync(
-          progressFile,
-          JSON.stringify({ progress: progress.percent / 100 }),
-        );
-      })
-      .on("end", () => {
-        console.log(
-          `720p copy complete using ${currentEncoding}, took ${
-            Date.now() - startTime
-          }ms to complete`,
-        );
+        ffmpeg()
+            .input(path)
+            .outputOptions(outputOptions)
+            .output(`uploads/720p-${filename}${extension}`)
+            .on("progress", function (progress) {
+                fs.writeFileSync(
+                    progressFile,
+                    JSON.stringify({ progress: progress.percent / 100 }),
+                );
+            })
+            .on("end", () => {
+                console.log(
+                    `720p copy complete using ${currentEncoding}, took ${
+                        Date.now() - startTime
+                    }ms to complete`,
+                );
 
-        // Delete the .processing file
-        fs.unlinkSync(progressFile);
+                // Delete the .processing file
+                fs.unlinkSync(progressFile);
 
-        resolve();
-      })
-      .on("error", (e) => {
-        // Ensure to delete the .processing file even on error
-        if (fs.existsSync(progressFile)) {
-          fs.unlinkSync(progressFile);
-        }
+                resolve();
+            })
+            .on("error", (e) => {
+                // Ensure to delete the .processing file even on error
+                if (fs.existsSync(progressFile)) {
+                    fs.unlinkSync(progressFile);
+                }
 
-        reject(new Error(e));
-      })
-      .run();
-  });
+                reject(new Error(e));
+            })
+            .run();
+    });
 };
 
 /**
@@ -189,80 +189,80 @@ export const ffmpegDownscale = (
  * });
  */
 export const ffmpegConvert = (
-  path: string,
-  filename: string,
-  extension: string,
+    path: string,
+    filename: string,
+    extension: string,
 ): Promise<void> => {
-  const startTime = Date.now();
-  const outputOptions = [
-    "-vf",
-    "scale=-2:720",
-    "-c:v",
-    currentEncoding,
-    "-c:a",
-    "copy",
-    "-movflags",
-    "+faststart",
-    "-pix_fmt",
-    "yuv420p",
-  ];
+    const startTime = Date.now();
+    const outputOptions = [
+        "-vf",
+        "scale=-2:720",
+        "-c:v",
+        currentEncoding,
+        "-c:a",
+        "copy",
+        "-movflags",
+        "+faststart",
+        "-pix_fmt",
+        "yuv420p",
+    ];
 
-  let outputFormat: string;
+    let outputFormat: string;
 
-  if (videoExtensions.includes(extension)) {
-    outputFormat = ".gif";
-  } else if (extension == ".gif") {
-    outputFormat = ".mp4";
-  } else {
+    if (videoExtensions.includes(extension)) {
+        outputFormat = ".gif";
+    } else if (extension == ".gif") {
+        outputFormat = ".mp4";
+    } else {
+        return new Promise<void>((resolve, reject) => {
+            reject(`Submitted file is neither a video nor a gif: ${path}`);
+        });
+    }
+
     return new Promise<void>((resolve, reject) => {
-      reject(`Submitted file is neither a video nor a gif: ${path}`);
+        const progressFile = `uploads/${filename}${extension}-progress.json`;
+
+        ffmpeg()
+            .input(path)
+            .outputOptions(outputOptions)
+            .output("uploads/")
+            .outputFormat(outputFormat)
+            .output(`uploads/${filename}${outputFormat}`)
+            .on("progress", function (progress) {
+                fs.writeFileSync(
+                    progressFile,
+                    JSON.stringify({ progress: progress.percent / 100 }),
+                );
+            })
+            .on("end", function () {
+                console.log(
+                    `Conversion complete, took ${Date.now() - startTime} to complete`,
+                );
+                console.log(`uploads/${filename}${outputFormat}`);
+                resolve();
+            })
+            .on("error", (e) => reject(e))
+            .run();
     });
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    const progressFile = `uploads/${filename}${extension}-progress.json`;
-
-    ffmpeg()
-      .input(path)
-      .outputOptions(outputOptions)
-      .output("uploads/")
-      .outputFormat(outputFormat)
-      .output(`uploads/${filename}${outputFormat}`)
-      .on("progress", function (progress) {
-        fs.writeFileSync(
-          progressFile,
-          JSON.stringify({ progress: progress.percent / 100 }),
-        );
-      })
-      .on("end", function () {
-        console.log(
-          `Conversion complete, took ${Date.now() - startTime} to complete`,
-        );
-        console.log(`uploads/${filename}${outputFormat}`);
-        resolve();
-      })
-      .on("error", (e) => reject(e))
-      .run();
-  });
 };
 
 export const ffProbe = async (
-  path: string,
-  filename: string,
-  extension: string,
+    path: string,
+    filename: string,
+    extension: string,
 ) => {
-  return new Promise<FfprobeData>((resolve, reject) => {
-    if (
-      !videoExtensions.includes(extension) &&
+    return new Promise<FfprobeData>((resolve, reject) => {
+        if (
+            !videoExtensions.includes(extension) &&
       !imageExtensions.includes(extension)
-    ) {
-      console.log(`Extension is ${extension}`);
-      reject(`Submitted file is neither a video nor an image: ${path}`);
-    }
+        ) {
+            console.log(`Extension is ${extension}`);
+            reject(`Submitted file is neither a video nor an image: ${path}`);
+        }
 
-    ffprobe(path, (err, data) => {
-      if (err) reject(err);
-      resolve(data);
+        ffprobe(path, (err, data) => {
+            if (err) reject(err);
+            resolve(data);
+        });
     });
-  });
 };
