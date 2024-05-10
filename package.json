@@ -46,7 +46,8 @@
     "passport-local": "^1.0.0",
     "probe-image-size": "^7.2.3",
     "sqlite3": "^5.0.2",
-    "which": "^4.0.0"
+    "which": "^4.0.0",
+    "ws": "^8.17.0"
   },
   "devDependencies": {
     "@types/connect-sqlite3": "^0.9.1",
@@ -62,6 +63,7 @@
     "@types/passport-local": "^1.0.34",
     "@types/probe-image-size": "^7.2.0",
     "@types/which": "^3.0.1",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^5.46.1",
     "@typescript-eslint/parser": "^5.46.1",
     "copyfiles": "^2.4.1",

@@ -12,8 +12,9 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
 <head>
   <% if (extension(url)[1] == ".gif") { %>
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
-  <meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
+  <link rel="alternate" type="application/json+oembed" 
+  href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
+<meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
   <meta property="og:description" content="Click to view the GIF"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -24,8 +25,9 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta property="og:url" content="<%= host %>/uploads/720p-<%= extension(url)[0] %>.gif"></meta>
   <% } else if (videoExtensions.includes(extension(url)[1])) { %>
   <meta name="twitter:card" content="player">
-  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
-  <meta property="og:title" content="<%= extension(url)[0]+extension(url)[1] %>"></meta>
+  <link rel="alternate" type="application/json+oembed" 
+  href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
+<meta property="og:title" content="<%= extension(url)[0]+extension(url)[1] %>"></meta>
   <meta property="og:description" content="Click to view the GIFv"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -36,8 +38,9 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta property="og:url" content="<%= host %>/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>.mp4"></meta>
   <% } else { %>
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="alternate" type="application/json+oembed" href="<%= host %>/uploads/oembed-<%= extension(url)[0]+extension(url)[1] %>.json"></link>
-  <meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
+  <link rel="alternate" type="application/json+oembed" 
+  href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
+<meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
   <meta property="og:description" content="Click to view the image"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -109,11 +112,15 @@ footer a:hover {
 </style>
 
 <body>
-  <% if (videoExtensions.includes(extension(url)[1])) { %>
-  <video class="image" width="100%" controls autoplay loop muted><source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>"></video>
-  <% } else { %>
-  <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" width="100%">
-  <% } %>
+  <div class="container">
+    <% if (videoExtensions.includes(extension(url)[1])) { %>
+      <video class="image" width="100%" controls autoplay muted> 
+        <source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>" type="video/mp4">
+        </video>
+    <% } else { %> 
+      <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image" alt="<%= oembedData.title %>"> 
+    <% } %>
+  </div>
 
   <footer>
     <p>Powered by <a href="https://github.com/waveringana/embedder">Embedder</a> created by <a href="https://github.com/waveringana">WaveringAna</a></p>

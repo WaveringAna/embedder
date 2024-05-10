@@ -31,7 +31,9 @@ export interface oembedObj {
   provider_name: string;
   provider_url: string;
   cache_age: number;
+  title: string;
   html: string;
+  url: string;
   width?: number;
   height?: number;
 }

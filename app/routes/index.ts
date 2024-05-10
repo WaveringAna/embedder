@@ -14,7 +14,7 @@ import { ffProbe } from "../lib/ffmpeg";
 import fs from "fs";
 import path from "path";
 
-import { extension, videoExtensions } from "../lib/lib";
+import { extension, videoExtensions, oembedObj } from "../lib/lib";
 import { db, MediaRow, getPath, deleteId } from "../lib/db";
 import { fileStorage } from "../lib/multer";
 import {
@@ -113,6 +113,43 @@ router.get(
                 width: imageData.width,
                 height: imageData.height,
             });
+        }
+    }
+);
+
+router.get("/oembed/:file", 
+    async (req: Request, res: Response) => {
+        const filename = req.params.file;
+        const fileExtension = filename.slice(filename.lastIndexOf("."));
+
+        try {
+            const oembedData: oembedObj = {
+                type: (videoExtensions.includes(fileExtension) ? "photo" : "video"),
+                version: "1.0",
+                provider_name: "embedder",
+                provider_url: "https://github.com/WaveringAna/embedder",
+                cache_age: 86400,
+                title: filename.slice(0, filename.lastIndexOf(".")),
+                html: "",
+                url: `${req.protocol}://${req.get("host")}/uploads/${filename}`
+            };
+
+            if (videoExtensions.includes(fileExtension) || fileExtension === '.gif') {
+                const ffprobeData = await ffProbe(`uploads/${filename}`, filename, fileExtension);
+                oembedData.width = ffprobeData.streams[0].width;
+                oembedData.height = ffprobeData.streams[0].height;
+    
+                // Consider generating a thumbnail_url if it's a video
+            } else {
+                const imageData = await imageProbe(fs.createReadStream(`uploads/${filename}`));
+                oembedData.width = imageData.width;
+                oembedData.height = imageData.height;
+            }
+
+            res.json(oembedData);
+        } catch (error) {
+            console.error("Error generating oEmbed data:", error);
+            res.status(500).send("Error generating oEmbed data");
         }
     }
 );

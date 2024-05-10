@@ -7,6 +7,8 @@ import which from "which";
 
 import fs from "fs";
 
+import { wss } from "./ws";
+
 /**
  * Enum to represent different types of video encoding methods.
  *

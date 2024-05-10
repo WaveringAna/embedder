@@ -69,6 +69,8 @@ export const createEmbedData: Middleware = async (req, res, next) => {
             html: `<iframe src='${req.protocol}://${req.get(
                 "host",
             )}/gifv/${filename}${fileExtension}'></iframe>`,
+            title: filename,
+            url: `${req.protocol}://${req.get("host")}/uploads/${filename}${fileExtension}`,
         };
 
         if (isMedia) {
