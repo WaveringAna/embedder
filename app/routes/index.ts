@@ -124,7 +124,7 @@ router.get("/oembed/:file",
 
         try {
             const oembedData: oembedObj = {
-                type: (videoExtensions.includes(fileExtension) ? "photo" : "video"),
+                type: (videoExtensions.includes(fileExtension) ? "video" : "photo"),
                 version: "1.0",
                 provider_name: "embedder",
                 provider_url: "https://github.com/WaveringAna/embedder",
@@ -134,16 +134,20 @@ router.get("/oembed/:file",
                 url: `${req.protocol}://${req.get("host")}/uploads/${filename}`
             };
 
-            if (videoExtensions.includes(fileExtension) || fileExtension === '.gif') {
+            if (videoExtensions.includes(fileExtension) || fileExtension === ".gif") {
                 const ffprobeData = await ffProbe(`uploads/${filename}`, filename, fileExtension);
                 oembedData.width = ffprobeData.streams[0].width;
                 oembedData.height = ffprobeData.streams[0].height;
-    
-                // Consider generating a thumbnail_url if it's a video
+                
+                oembedData.html = `<video width="${oembedData.width}" height="${oembedData.height}" controls><source src="${oembedData.url}" type="video/${fileExtension.substring(1)}">Your browser does not support the video tag.</video>`;
             } else {
                 const imageData = await imageProbe(fs.createReadStream(`uploads/${filename}`));
                 oembedData.width = imageData.width;
                 oembedData.height = imageData.height;
+
+                oembedData.html = `
+                    <img src="${oembedData.url}" width="${oembedData.width}" height="${oembedData.height}" alt="${filename}">
+                `;
             }
 
             res.json(oembedData);

@@ -46,12 +46,9 @@ passport.use(
     }),
 );
 
-passport.serializeUser(function (user: User, cb) {
-    process.nextTick(function () {
-        cb(null, {
-            id: user.id,
-            username: user.username,
-        });
+passport.serializeUser((user: User, cb: (err: Error | null, id?: User) => void) => {
+    process.nextTick(() => {
+        cb(null, user); // No need to reconstruct the user object
     });
 });
 

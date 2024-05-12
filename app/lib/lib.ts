@@ -4,8 +4,8 @@ declare global {
     interface User {
       id?: number | string;
       username: string;
-      hashed_password?: any;
-      salt?: any;
+      hashed_password?: Buffer;
+      salt?: Buffer;
     }
   }
 }
@@ -21,8 +21,11 @@ export function extension(str: string) {
 export interface User {
   id?: number | string;
   username: string;
-  hashed_password?: any;
-  salt?: any;
+}
+
+export interface UserRow extends User {
+  salt: Buffer;
+  hashed_password: Buffer;
 }
 
 export interface oembedObj {
