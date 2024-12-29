@@ -31,13 +31,17 @@ const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); 
 const fetchMedia: Middleware = (req, res, next) => {
     const admin: boolean = req.user.username == "admin" ? true : false;
     /**Check if the user is an admin, if so, show all posts from all users */
-    const query: string =
-    admin == true
-        ? "SELECT * FROM media"
-        : `SELECT * FROM media WHERE username = '${req.user.username}'`;
+    const query: string = admin 
+        ? "SELECT * FROM media" 
+        : "SELECT * FROM media WHERE username = ?";
 
-    db.all(query, (err: Error, rows: []) => {
-        if (err) return next(err);
+    const params: any[] = admin ? [] : [req.user.username];
+
+    db.all(query, params, (err: Error, rows: []) => {
+        if (err) {
+            console.error("Error fetching media:", err);
+            return res.status(500).send("Database error");
+        }
         const files = rows.map((row: MediaRow) => {
             return {
                 id: row.id,

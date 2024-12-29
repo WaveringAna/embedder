@@ -20,11 +20,11 @@ import fs from "fs";
  * @property {string} APPLE - Uses the h264_videotoolbox codec for Apple GPU/MediaEngine-based encoding
  */
 export enum EncodingType {
-  CPU = "libx264",
-  NVIDIA = "h264_nvenc",
-  AMD = "h264_amf",
-  INTEL = "h264_qsv",
-  APPLE = "h264_videotoolbox",
+    CPU = "libx264",
+    NVIDIA = "h264_nvenc",
+    AMD = "h264_amf", 
+    INTEL = "h264_qsv",
+    APPLE = "h264_videotoolbox"
 }
 
 /**
