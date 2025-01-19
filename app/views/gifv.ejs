@@ -1,12 +1,3 @@
-<%
-function extension(str){
-  let file = str.split('/').pop();
-  return [file.substr(0,file.lastIndexOf('.')),file.substr(file.lastIndexOf('.'),file.length).toLowerCase()]
-}
-
-const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'];
-%>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,7 +5,7 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta name="twitter:card" content="summary_large_image">
   <link rel="alternate" type="application/json+oembed" 
   href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
-<meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
+  <meta property="og:title" content="<%= extension(url)[0] %>.gif"></meta>
   <meta property="og:description" content="Click to view the GIF"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -27,7 +18,7 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta name="twitter:card" content="player">
   <link rel="alternate" type="application/json+oembed" 
   href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
-<meta property="og:title" content="<%= extension(url)[0]+extension(url)[1] %>"></meta>
+  <meta property="og:title" content="<%= extension(url)[0]+extension(url)[1] %>"></meta>
   <meta property="og:description" content="Click to view the GIFv"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -40,7 +31,7 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
   <meta name="twitter:card" content="summary_large_image">
   <link rel="alternate" type="application/json+oembed" 
   href="<%= host %>/oembed/<%= extension(url)[0]+extension(url)[1] %>"></link>
-<meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
+  <meta property="og:title" content="<%= extension(url)[0] + extension(url)[1] %>"></meta>
   <meta property="og:description" content="Click to view the image"></meta>
   <meta property="og:site_name" content="embedder"></meta>
   <meta property="og:type" content="article"></meta>
@@ -53,44 +44,70 @@ const videoExtensions = ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'
 </head>
 
 <style>
-body {
-    background-color: #121212; /* Dark background */
-    color: #e0e0e0; /* Light text color for contrast */
-    font-family: Arial, sans-serif; /* A modern, readable font */
+html, body {
+    height: 100%;
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: Arial, sans-serif;
 }
 
-a {
-    color: #bb86fc; /* A lighter shade for links */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page-content {
+    flex: 1 0 auto;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .container {
-    max-width: 800px; /* Limit the width of the content */
-    margin: auto;
+    max-width: 800px;
+    margin: 0 auto;
     padding: 20px;
-    background-color: #1e1e1e; /* Slightly lighter than body background */
+    background-color: #1e1e1e;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Adding a subtle shadow for depth */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
-.header {
-    font-size: 24px;
-    margin-bottom: 10px;
+.media-container {
+    position: relative;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
-p {
-    line-height: 1.6; /* Improve readability */
+.image {
+    max-width: 100%;
+    max-height: 80vh;
+    height: auto;
+    object-fit: contain;
+}
+
+video.image {
+    width: auto;
+}
+
+a {
+    color: #bb86fc;
 }
 
 footer {
-    text-align: center;
+    flex-shrink: 0;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
     padding: 20px;
-    background-color: #1e1e1e; /* Dark background for the footer */
-    color: #e0e0e0; /* Light text color for contrast */
-    position: absolute;
-    bottom: 0;
+    text-align: center;
     width: 100%;
+    box-sizing: border-box;
 }
 
 footer p {
@@ -98,28 +115,32 @@ footer p {
 }
 
 footer a {
-    color: #bb86fc; /* Light shade for links, adjust as needed */
+    color: #bb86fc;
     text-decoration: none;
 }
 
 footer a:hover {
-    text-decoration: underline; /* Adds an underline on hover for better user experience */
+    text-decoration: underline;
 }
 
 @media (prefers-color-scheme: light) {
-    
+    /* Light theme styles here */
 }
 </style>
 
 <body>
-  <div class="container">
-    <% if (videoExtensions.includes(extension(url)[1])) { %>
-      <video class="image" width="100%" controls autoplay muted> 
-        <source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>" type="video/mp4">
-        </video>
-    <% } else { %> 
-      <img width="100%" src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image"> 
-    <% } %>
+  <div class="page-content">
+    <div class="container">
+      <div class="media-container">
+        <% if (videoExtensions.includes(extension(url)[1])) { %>
+          <video class="image" controls autoplay muted> 
+            <source src="/uploads/720p-<%= extension(url)[0]+extension(url)[1] %>" type="video/mp4">
+          </video>
+        <% } else { %> 
+          <img src="/uploads/<%= extension(url)[0] + extension(url)[1] %>" class="image"> 
+        <% } %>
+      </div>
+    </div>
   </div>
 
   <footer>
