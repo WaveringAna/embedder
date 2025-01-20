@@ -27,13 +27,11 @@
   height: 100px;
   position: relative;
   margin: 50px auto;
-
   color: #555;
   text-align: center;
   font-family: Arial, sans-serif;
   font-size: 14px;
   padding-top: 80px;
-
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -80,6 +78,7 @@
   color: rgb(247, 248, 248);
   appearance: none;
   transition: border 0.15s ease 0s;
+
   :focus {
     outline: none;
     box-shadow: none;

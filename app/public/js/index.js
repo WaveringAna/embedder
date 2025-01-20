@@ -2,294 +2,255 @@
 /* eslint-disable no-undef */
 /* eslint-env browser: true */
 
-let newMediaList;
+const MEDIA_TYPES = {
+    video: ['.mp4', '.mov', '.avi', '.flv', '.mkv', '.wmv', '.webm'],
+    image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.webp']
+};
 
-const videoExtensions = [
-    ".mp4",
-    ".mov",
-    ".avi",
-    ".flv",
-    ".mkv",
-    ".wmv",
-    ".webm",
-];
+const getFileExtension = filename => {
+    const parts = filename.split('.');
+    return parts.length > 1 ? `.${parts.pop().toLowerCase()}` : '';
+};
 
-const imageExtensions = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".bmp",
-    ".svg",
-    ".tiff",
-    ".webp",
-];
+const getMediaType = filename => {
+    const ext = getFileExtension(filename);
+    if (MEDIA_TYPES.video.includes(ext)) return 'video';
+    if (MEDIA_TYPES.image.includes(ext)) return 'image';
+    return 'other';
+};
 
+class FileUploader {
+    constructor() {
+        this.dropArea = document.getElementById('dropArea');
+        this.gallery = document.getElementById('gallery');
+        this.setupEventListeners();
+        this.setupProgressUpdates();
+    }
 
-function copyURI(evt) {
-    evt.preventDefault();
-    navigator.clipboard
-        .writeText(absolutePath(evt.target.getAttribute("src")))
-        .then(
-            () => {
-                console.log("copied");
-            },
-            () => {
-                console.log("failed");
+    setupEventListeners() {
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            this.dropArea.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            this.dropArea.addEventListener(eventName, () =>
+                this.dropArea.classList.add('highlight'));
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            this.dropArea.addEventListener(eventName, () =>
+                this.dropArea.classList.remove('highlight'));
+        });
+
+        // Handle file drops
+        this.dropArea.addEventListener('drop', e =>
+            this.handleFiles(e.dataTransfer.files));
+
+        // Handle paste events
+        window.addEventListener('paste', e => this.handlePaste(e));
+
+        // Handle manual file selection
+        document.getElementById('fileupload')
+            .addEventListener('change', e => this.handleFiles(e.target.files));
+
+        // Handle manual upload button
+        document.getElementById('submit')
+            .addEventListener('click', () => this.uploadSelectedFiles());
+    }
+
+    setupProgressUpdates() {
+        console.log("Setting up SSE connection...");
+        const evtSource = new EventSource('/progress-updates');
+
+        evtSource.onopen = () => {
+            console.log("SSE connection established");
+        };
+
+        evtSource.onmessage = event => {
+            console.log("Raw SSE data:", event.data);
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'connected') {
+                console.log("Initial connection established");
+                return;
             }
-        );
-}
 
-function copyA(evt) {
-    evt.preventDefault();
-    navigator.clipboard
-        .writeText(absolutePath(evt.target.getAttribute("href")))
-        .then(
-            () => {
-                console.log("copied");
-            },
-            () => {
-                console.log("failed");
+            const { filename, progress, status } = data;
+            const sanitizedFilename = sanitizeId(filename);
+
+            console.log("Looking for elements:", {
+                spinnerSelector: `spinner-${sanitizedFilename}`,
+                containerSelector: `media-container-${sanitizedFilename}`,
+            });
+
+            const spinnerElement = document.getElementById(`spinner-${sanitizedFilename}`);
+            const containerElement = document.getElementById(`media-container-${sanitizedFilename}`);
+
+            if (!spinnerElement || !containerElement) {
+                console.warn("Could not find required elements for:", filename);
+                return;
             }
-        );
-}
 
-function copyPath(evt) {
-    navigator.clipboard.writeText(absolutePath(evt)).then(
-        () => {
-            console.log("copied");
-        },
-        () => {
-            console.log("failed");
+            if (status === 'complete') {
+                console.log("Processing complete, showing video for:", filename);
+                spinnerElement.style.display = 'none';
+                containerElement.style.display = 'block';
+            } else if (status === 'processing') {
+                console.log("Updating progress for:", filename);
+                spinnerElement.textContent =
+                    `Optimizing Video for Sharing: ${(progress * 100).toFixed(2)}% done`;
+            }
+        };
+
+        evtSource.onerror = (err) => {
+            console.error("SSE Error:", err);
+        };
+    }
+
+    async handleFiles(files) {
+        const filesArray = [...files];
+        for (const file of filesArray) {
+            await this.uploadFile(file);
         }
-    );
+    }
+
+    handlePaste(e) {
+        const items = [...e.clipboardData.items]
+            .filter(item => item.type.indexOf('image') !== -1);
+
+        if (items.length) {
+            const file = items[0].getAsFile();
+            this.uploadFile(file);
+        }
+    }
+
+    async uploadFile(file) {
+        const formData = new FormData();
+        formData.append('fileupload', file);
+        formData.append('expire', document.getElementById('expire').value);
+
+        try {
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+
+            // Get the new file list HTML and insert it
+            const listResponse = await fetch('/media-list');
+            const html = await listResponse.text();
+            document.getElementById('embedder-list').innerHTML = html;
+
+            // Clear preview
+            this.gallery.innerHTML = '';
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Upload failed: ' + error.message);
+        }
+    }
+
+    uploadSelectedFiles() {
+        const fileInput = document.getElementById('fileupload');
+        if (fileInput.files.length) {
+            this.handleFiles(fileInput.files);
+        }
+    }
+
+    showMediaElement(filename) {
+        const container = document.getElementById(`media-container-${filename}`);
+        const spinner = document.getElementById(`spinner-${filename}`);
+
+        if (container && spinner) {
+            const mediaType = getMediaType(filename);
+
+            if (mediaType === 'video') {
+                container.innerHTML = `
+                    <video class="image" autoplay loop muted playsinline>
+                        <source src="/uploads/720p-${filename}">
+                    </video>`;
+            }
+
+            spinner.style.display = 'none';
+            container.style.display = 'block';
+        }
+    }
 }
 
-function absolutePath(href) {
-    let link = document.createElement("a");
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    new FileUploader();
+
+    // Setup search functionality
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('input', e => {
+            const searchValue = e.target.value.toLowerCase();
+            const mediaItems = document.querySelectorAll('ul.embedder-list li');
+
+            mediaItems.forEach(item => {
+                const matches = item.id.toLowerCase().includes(searchValue);
+                item.classList.toggle('hide', !matches);
+                item.classList.toggle('show', matches);
+
+                item.addEventListener('animationend', function handler() {
+                    if (!matches && searchValue !== '') {
+                        this.style.display = 'none';
+                    }
+                    this.removeEventListener('animationend', handler);
+                });
+            });
+        });
+    }
+});
+
+// Utility functions for the media list
+window.copyURI = e => {
+    e.preventDefault();
+    navigator.clipboard.writeText(absolutePath(e.target.getAttribute('src')))
+        .then(() => console.log('Copied to clipboard'))
+        .catch(err => console.error('Copy failed:', err));
+};
+
+window.copyA = e => {
+    e.preventDefault();
+    navigator.clipboard.writeText(absolutePath(e.target.getAttribute('href')))
+        .then(() => console.log('Copied to clipboard'))
+        .catch(err => console.error('Copy failed:', err));
+};
+
+window.copyPath = evt => {
+    navigator.clipboard.writeText(absolutePath(evt))
+        .then(() => console.log('Copied to clipboard'))
+        .catch(err => console.error('Copy failed:', err));
+};
+
+window.absolutePath = href => {
+    const link = document.createElement('a');
     link.href = href;
     return link.href;
-}
+};
 
-function extension(string) {
-    return string.slice(((string.lastIndexOf(".") - 2) >>> 0) + 2);
-}
+window.openFullSize = imageUrl => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
 
-let dropArea = document.getElementById("dropArea");
+    const mediaType = getMediaType(imageUrl);
+    const element = mediaType === 'video'
+        ? `<video src="${imageUrl}" controls></video>`
+        : `<img src="${imageUrl}">`;
 
-["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
-    dropArea.addEventListener(eventName, preventDefaults, false);
-});
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-["dragenter", "dragover"].forEach((eventName) => {
-    dropArea.addEventListener(eventName, highlight, false);
-});
-["dragleave", "drop"].forEach((eventName) => {
-    dropArea.addEventListener(eventName, unhighlight, false);
-});
-
-function highlight(e) {
-    dropArea.classList.add("highlight");
-}
-
-function unhighlight(e) {
-    dropArea.classList.remove("highlight");
-}
-
-dropArea.addEventListener("drop", handleDrop, false);
-window.addEventListener("paste", handlePaste);
-
-function handleDrop(e) {
-    let dt = e.dataTransfer;
-    let files = dt.files;
-    handleFiles(files);
-}
-
-function handlePaste(e) {
-    // Get the data of clipboard
-    const clipboardItems = e.clipboardData.items;
-    const items = [].slice.call(clipboardItems).filter(function (item) {
-    // Filter the image items only
-        return item.type.indexOf("image") !== -1;
-    });
-    if (items.length === 0) {
-        return;
-    }
-
-    const item = items[0];
-    // Get the blob of image
-    const blob = item.getAsFile();
-    console.log(blob);
-
-    uploadFile(blob);
-    previewFile(blob);
-}
-
-function handleFiles(files) {
-    files = [...files];
-    files.forEach(uploadFile);
-    files.forEach(previewFile);
-}
-
-function previewFile(file) {
-    let reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = function () {
-        let img = document.createElement("img");
-        img.src = reader.result;
-        img.className = "image";
-        document.getElementById("gallery").appendChild(img);
-        document.getElementById("fileupload").src = img.src;
-    };
-}
-
-function uploadFile(file) {
-    let xhr = new XMLHttpRequest();
-    let formData = new FormData();
-
-    xhr.open("POST", "/", true);
-
-    xhr.addEventListener("readystatechange", function () {
-        if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-                //document.getElementById("embedder-list").innerHTML = response;
-                htmx.ajax("GET", "/media-list", {target: "#embedder-list", swap: "innerHTML"});
-                document.getElementById("gallery").innerHTML = "";
-                htmx.process(document.body);
-            } else {
-                alert(`Upload failed, error code: ${xhr.status}`);
-            }
-        }
-    });
-
-    if (file == null || file == undefined) {
-        file = document.querySelector("#fileupload").files[0];
-    }
-
-    formData.append("fileupload", file);
-    formData.append("expire", document.getElementById("expire").value);
-    xhr.send(formData);
-}
-
-function openFullSize(imageUrl) {
-    let modal = document.createElement("div");
-    modal.classList.add("modal");
-    let img = document.createElement("img");
-    let video = document.createElement("video");
-    img.src = imageUrl;
-    video.src = imageUrl;
-    video.controls = true;
-
-    if (
-        imageExtensions.includes(extension(imageUrl))
-    ) {
-        modal.appendChild(img);
-    } else if (
-        videoExtensions.includes(extension(imageUrl))
-    ) {
-        modal.appendChild(video);
-    }
-
-    // Add the modal to the page
+    modal.innerHTML = element;
     document.body.appendChild(modal);
 
-    // Add an event listener to close the modal when the user clicks on it
-    modal.addEventListener("click", function () {
-        modal.remove();
-    });
-}
+    modal.addEventListener('click', () => modal.remove());
+};
 
-let searchInput = document.getElementById("search");
-
-searchInput.addEventListener("input", () => {
-    let searchValue = searchInput.value;
-    let mediaList = document.querySelectorAll("ul.embedder-list li");
-
-    mediaList.forEach((li) => {
-        if (!li.id.toLowerCase().includes(searchValue)) {
-            //make lowercase to allow case insensitivity
-            li.classList.add("hide");
-            li.classList.remove("show");
-            li.addEventListener(
-                "animationend",
-                function () {
-                    if (searchInput.value !== "") {
-                        this.style.display = "none";
-                    }
-                },
-                { once: true }
-            ); // The {once: true} option automatically removes the event listener after it has been called
-        } else {
-            li.style.display = "";
-            li.classList.remove("hide");
-            if (searchValue === "" && !li.classList.contains("show")) {
-                li.classList.add("show");
-            }
-        }
-    });
-});
-
-function p(num) {
-    return `${(num * 100).toFixed(2)}%`;
-}
-
-function checkFileAvailability(filePath) {
-    const checkFile = () => {
-        console.log(`Checking if ${filePath} is processed...`);
-        fetch(`/uploads/${filePath}-progress.json`)
-            .then((response) => {
-                if (response.ok) {
-                    console.log(`${filePath} still processing`);
-                    return response.json().then(json => {
-                        document.getElementById(`spinner-${filePath}`).innerText = `Optimizing Video for Sharing: ${p(json.progress)} done`;
-                        return response;
-                    });
-                } else if (response.status === 404) {
-                    console.log(`${filePath} finished processing`);
-                    console.log(`/uploads/720p-${filePath}-progress.json finished`);
-                    clearInterval(interval);
-                    createVideoElement(filePath);
-                } else {
-                    throw new Error(`HTTP error: Status code ${response.status}`);
-                }
-            })
-            .catch((error) => console.error("Error:", error));
-    };
-
-    checkFile();
-    const interval = setInterval(checkFile, 1000);
-}
-
-function createVideoElement(filePath) {
-    const videoContainer = document.getElementById(`video-${filePath}`);
-    videoContainer.outerHTML = `
-    <video id='video-${filePath}' class="image" autoplay loop muted playsinline>
-      <source src="/uploads/720p-${filePath}">
-    </video>
-  `;
-    videoContainer.style.display = "block";
-    document.getElementById(`spinner-${filePath}`).style.display = "none";
-}
-
-function updateMediaList() {
-    htmx.ajax("GET", "/media-list", {target: "#embedder-list", swap: "innerHTML"});
-    htmx.process(document.body);
-}
-
-function refreshMediaList(files) {
-    files.forEach(file => {
-        console.log(`Checking ${file.path}...`);
-        if (videoExtensions.includes(extension(file.path))) {
-            const progressFileName = `uploads/${file.path}-progress.json`;
-            console.log(`Fetching ${progressFileName}...`);
-            checkFileAvailability(file.path);
-        } else {
-            console.log(`File ${file.path} is not a video, displaying...`);
-        }
-    });
+function sanitizeId(filename) {
+    return filename.replace(/[^a-z0-9]/gi, '_');
 }

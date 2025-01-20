@@ -17,12 +17,13 @@ import path from "path";
 import { extension, videoExtensions, oembedObj } from "../lib/lib";
 import { db, MediaRow, getPath, deleteId } from "../lib/db";
 import { fileStorage } from "../lib/multer";
+import { progressManager } from "../services/ProgressManager";
 import {
     checkAuth,
     checkSharexAuth,
-    convertTo720p,
     createEmbedData,
     handleUpload,
+    processUploadedMedia,
 } from "../lib/middleware";
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
@@ -30,9 +31,8 @@ const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); 
 
 const fetchMedia: Middleware = (req, res, next) => {
     const admin: boolean = req.user.username == "admin" ? true : false;
-    /**Check if the user is an admin, if so, show all posts from all users */
-    const query: string = admin 
-        ? "SELECT * FROM media" 
+    const query: string = admin
+        ? "SELECT * FROM media"
         : "SELECT * FROM media WHERE username = ?";
 
     const params: any[] = admin ? [] : [req.user.username];
@@ -43,21 +43,49 @@ const fetchMedia: Middleware = (req, res, next) => {
             return res.status(500).send("Database error");
         }
         const files = rows.map((row: MediaRow) => {
+            const isProcessed = videoExtensions.includes(extension(row.path)[1]) ?
+                fs.existsSync(`uploads/720p-${row.path}`) :
+                true;
+
             return {
                 id: row.id,
                 path: row.path,
                 expire: row.expire,
                 username: row.username,
                 url: "/" + row.id,
+                isProcessed
             };
         });
-        res.locals.files = files.reverse(); //reverse so newest files appear first
+        res.locals.files = files.reverse();
         res.locals.Count = files.length;
         next();
     });
 };
 
 const router = express.Router();
+
+router.get('/progress-updates', (req, res) => {
+    console.log("SSE connection requested");  // Debug log
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Send an initial message to confirm connection
+    res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+
+    const sendUpdate = (data: any) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    progressManager.subscribeToUpdates(sendUpdate);
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+        console.log("SSE connection closed");  // Debug log
+        progressManager.unsubscribeFromUpdates(sendUpdate);
+    });
+});
 
 router.get(
     "/",
@@ -79,18 +107,17 @@ router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
 router.get(
     "/gifv/:file",
     async (req: Request, res: Response, next: NextFunction) => {
-        const url = `${req.protocol}://${req.get("host")}/uploads/${
-            req.params.file
-        }`;
+        const url = `${req.protocol}://${req.get("host")}/uploads/${req.params.file
+            }`;
         let width;
         let height;
 
         const [filename, fileExtension] = extension(`uploads/${req.params.file}`);
         if (
             fileExtension == ".mp4" ||
-      fileExtension == ".mov" ||
-      fileExtension == ".webm" ||
-      fileExtension == ".gif"
+            fileExtension == ".mov" ||
+            fileExtension == ".webm" ||
+            fileExtension == ".gif"
         ) {
             const imageData = ffProbe(
                 `uploads/${req.params.file}`,
@@ -121,7 +148,7 @@ router.get(
     }
 );
 
-router.get("/oembed/:file", 
+router.get("/oembed/:file",
     async (req: Request, res: Response) => {
         const filename = req.params.file;
         const fileExtension = filename.slice(filename.lastIndexOf("."));
@@ -142,7 +169,7 @@ router.get("/oembed/:file",
                 const ffprobeData = await ffProbe(`uploads/${filename}`, filename, fileExtension);
                 oembedData.width = ffprobeData.streams[0].width;
                 oembedData.height = ffprobeData.streams[0].height;
-                
+
                 oembedData.html = `<video width="${oembedData.width}" height="${oembedData.height}" controls><source src="${oembedData.url}" type="video/${fileExtension.substring(1)}">Your browser does not support the video tag.</video>`;
             } else {
                 const imageData = await imageProbe(fs.createReadStream(`uploads/${filename}`));
@@ -167,10 +194,10 @@ router.post(
     [
         checkAuth,
         upload.array("fileupload"),
-        convertTo720p,
-        createEmbedData,
         handleUpload,
         fetchMedia,
+        processUploadedMedia,
+        createEmbedData,
     ],
     (req: Request, res: Response) => {
         return res.render("partials/_fileList", { user: req.user }); // Render only the file list partial
@@ -192,9 +219,9 @@ router.get(
     [checkAuth],
     async (req: Request, res: Response, next: NextFunction) => {
         const filename: any = await getPath(req.params.id);
-        const filePath = path.join(__dirname , "../../uploads/" + filename.path);
+        const filePath = path.join(__dirname, "../../uploads/" + filename.path);
         const oembed = path.join(
-            __dirname , "../../uploads/oembed-" + filename.path + ".json"
+            __dirname, "../../uploads/oembed-" + filename.path + ".json"
         );
 
         const [fileName, fileExtension] = extension(filePath);
@@ -202,10 +229,10 @@ router.get(
 
         if (
             videoExtensions.includes(fileExtension) ||
-      fileExtension == ".gif"
+            fileExtension == ".gif"
         ) {
             filesToDelete.push(
-                path.join(__dirname , "../../uploads/720p-" + filename.path)
+                path.join(__dirname, "../../uploads/720p-" + filename.path)
             );
         }
 

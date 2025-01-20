@@ -6,6 +6,7 @@ import process from "process";
 import { extension, videoExtensions, imageExtensions, oembedObj } from "./lib";
 import { insertToDB } from "./db";
 import { ffmpegDownscale, ffProbe } from "./ffmpeg";
+import { MediaProcessor } from "../services/MediaProcesser";
 
 export const checkAuth: Middleware = (req, res, next) => {
     if (!req.user) {
@@ -17,7 +18,7 @@ export const checkAuth: Middleware = (req, res, next) => {
 /**Checks shareX auth key */
 export const checkSharexAuth: Middleware = (req, res, next) => {
     const auth =
-    process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
+        process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
     let key = null;
 
     if (req.headers["key"]) {
@@ -57,8 +58,8 @@ export const createEmbedData: Middleware = async (req, res, next) => {
     for (const file in files) {
         const [filename, fileExtension] = extension(files[file].filename);
         const isMedia =
-      videoExtensions.includes(fileExtension) ||
-      imageExtensions.includes(fileExtension);
+            videoExtensions.includes(fileExtension) ||
+            imageExtensions.includes(fileExtension);
 
         const oembed: oembedObj = {
             type: "video",
@@ -164,5 +165,27 @@ export const handleUpload: Middleware = async (req, res, next) => {
     } catch (error) {
         console.error("Error in handleUpload:", error);
         res.status(500).send("Error processing files.");
+    }
+};
+
+export const processUploadedMedia: Middleware = async (req, res, next) => {
+    try {
+        const files = req.files as Express.Multer.File[];
+
+        for (const file of files) {
+            const [filename, fileExtension] = extension(file.filename);
+
+            if (videoExtensions.includes(fileExtension)) {
+                MediaProcessor.processVideo(
+                    file.path,
+                    filename,
+                    fileExtension
+                ).catch(err => console.error("Error processing video:", err));
+            }
+        }
+
+        next();
+    } catch (error) {
+        next(error);
     }
 };

@@ -18,7 +18,7 @@ import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 import settingsRouter from "./routes/settings";
 
-import {db, expire, createDatabase, updateDatabase, MediaRow} from "./lib/db";
+import { db, expire, createDatabase, updateDatabase, MediaRow } from "./lib/db";
 
 const app = express();
 const server = http.createServer(app);
@@ -70,11 +70,11 @@ function onError(error: any) {
 
 // Check if there is an existing DB or not, then check if it needs to be updated to new schema
 db.get("SELECT * FROM sqlite_master WHERE name ='users' and type='table'", async (err, row) => {
-    if (!row) createDatabase(3); 
+    if (!row) createDatabase(3);
     else checkVersion();
 });
 
-function checkVersion () {
+function checkVersion() {
     db.get("PRAGMA user_version", (err: Error, row: any) => {
         if (row && row.user_version) {
             const version = row.user_version;
@@ -128,7 +128,7 @@ app.use("/", settingsRouter);
 
 app.use("/uploads", express.static("uploads"));
 
-async function prune () {
+async function prune() {
     db.all("SELECT * FROM media", (err: Error, rows: []) => {
         console.log("Uploaded files: " + rows.length);
         console.log(rows);
