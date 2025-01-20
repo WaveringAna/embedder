@@ -40,7 +40,7 @@
         </form>
       </nav>
     </header>
-    <form hx-post="/" encType="multipart/form-data" hx-target="#embedder-list" hx-swap="innerHTML">
+    <form encType="multipart/form-data" hx-target="#embedder-list" hx-swap="innerHTML">
       <div id="dropArea">
         <p class="dragregion">Upload a file, copy paste, or drag n' drop into the dashed region</p>
         <div id="gallery"></div>
@@ -62,6 +62,12 @@
           </select>
         </p>
         <p class="dragregion">Click the file to copy the url</p>
+      </div>
+      <div id="uploadProgressContainer" style="display:none;">
+        <p>Uploading: <span id="uploadPercent">0%</span></p>
+        <div style="width:100%; background:#333;">
+          <div id="uploadBar" style="width:0%; height:8px; background:#c00;"></div>
+        </div>
       </div>
     </form>
     <section class="main">

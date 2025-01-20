@@ -24,7 +24,7 @@ class FileUploader {
         this.dropArea = document.getElementById('dropArea');
         this.gallery = document.getElementById('gallery');
         this.setupEventListeners();
-        this.setupProgressUpdates();
+        this.setupProgressUpdates();  // SSE logic for transcoding
     }
 
     setupEventListeners() {
@@ -53,11 +53,11 @@ class FileUploader {
         // Handle paste events
         window.addEventListener('paste', e => this.handlePaste(e));
 
-        // Handle manual file selection
+        // Manual file selection
         document.getElementById('fileupload')
             .addEventListener('change', e => this.handleFiles(e.target.files));
 
-        // Handle manual upload button
+        // Manual upload button
         document.getElementById('submit')
             .addEventListener('click', () => this.uploadSelectedFiles());
     }
@@ -82,27 +82,21 @@ class FileUploader {
             const { filename, progress, status } = data;
             const sanitizedFilename = sanitizeId(filename);
 
-            console.log("Looking for elements:", {
-                spinnerSelector: `spinner-${sanitizedFilename}`,
-                containerSelector: `media-container-${sanitizedFilename}`,
-            });
-
             const spinnerElement = document.getElementById(`spinner-${sanitizedFilename}`);
             const containerElement = document.getElementById(`media-container-${sanitizedFilename}`);
 
             if (!spinnerElement || !containerElement) {
-                console.warn("Could not find required elements for:", filename);
+                console.warn("SSE: Could not find required elements for:", filename);
                 return;
             }
 
             if (status === 'complete') {
-                console.log("Processing complete, showing video for:", filename);
+                console.log("Processing complete:", filename);
                 spinnerElement.style.display = 'none';
                 containerElement.style.display = 'block';
             } else if (status === 'processing') {
-                console.log("Updating progress for:", filename);
                 spinnerElement.textContent =
-                    `Optimizing Video for Sharing: ${(progress * 100).toFixed(2)}% done`;
+                    `Optimizing Video for Sharing: ${(progress * 100).toFixed(2)}%`;
             }
         };
 
@@ -114,44 +108,16 @@ class FileUploader {
     async handleFiles(files) {
         const filesArray = [...files];
         for (const file of filesArray) {
-            await this.uploadFile(file);
+            await this.uploadFileWithProgress(file);
         }
     }
 
     handlePaste(e) {
         const items = [...e.clipboardData.items]
             .filter(item => item.type.indexOf('image') !== -1);
-
         if (items.length) {
             const file = items[0].getAsFile();
-            this.uploadFile(file);
-        }
-    }
-
-    async uploadFile(file) {
-        const formData = new FormData();
-        formData.append('fileupload', file);
-        formData.append('expire', document.getElementById('expire').value);
-
-        try {
-            const response = await fetch('/', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
-
-            // Get the new file list HTML and insert it
-            const listResponse = await fetch('/media-list');
-            const html = await listResponse.text();
-            document.getElementById('embedder-list').innerHTML = html;
-
-            // Clear preview
-            this.gallery.innerHTML = '';
-
-        } catch (error) {
-            console.error('Upload error:', error);
-            alert('Upload failed: ' + error.message);
+            this.uploadFileWithProgress(file);
         }
     }
 
@@ -162,23 +128,64 @@ class FileUploader {
         }
     }
 
-    showMediaElement(filename) {
-        const container = document.getElementById(`media-container-${filename}`);
-        const spinner = document.getElementById(`spinner-${filename}`);
+    async uploadFileWithProgress(file) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const formData = new FormData();
 
-        if (container && spinner) {
-            const mediaType = getMediaType(filename);
+            formData.append('fileupload', file);
+            formData.append('expire', document.getElementById('expire').value);
 
-            if (mediaType === 'video') {
-                container.innerHTML = `
-                    <video class="image" autoplay loop muted playsinline>
-                        <source src="/uploads/720p-${filename}">
-                    </video>`;
-            }
-
-            spinner.style.display = 'none';
+            // Show the progress UI
+            const container = document.getElementById('uploadProgressContainer');
+            const percentElem = document.getElementById('uploadPercent');
+            const barElem = document.getElementById('uploadBar');
             container.style.display = 'block';
-        }
+
+            // Upload progress event
+            xhr.upload.addEventListener('progress', e => {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    percentElem.textContent = percent.toFixed(1) + '%';
+                    barElem.style.width = percent + '%';
+                }
+            });
+
+            xhr.upload.addEventListener('load', () => {
+                console.log('Upload completed for', file.name);
+            });
+
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        // We got a success from the server, re-render the file list
+                        console.log('Server returned success for', file.name);
+
+                        // Hide & reset progress bar
+                        container.style.display = 'none';
+                        barElem.style.width = '0%';
+                        percentElem.textContent = '0%';
+
+                        // Insert updated partial into #embedder-list
+                        document.getElementById('embedder-list').innerHTML = xhr.responseText;
+                        htmx.process(document.getElementById('embedder-list'))
+                        // Clear any "preview" in the gallery
+                        this.gallery.innerHTML = '';
+
+                        resolve();
+                    } else {
+                        // Some error from the server
+                        const msg = `Upload failed: ${xhr.status} - ${xhr.responseText}`;
+                        console.error(msg);
+                        alert(msg);
+                        reject(new Error(msg));
+                    }
+                }
+            };
+
+            xhr.open('POST', '/');
+            xhr.send(formData);
+        });
     }
 }
 
