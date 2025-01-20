@@ -72,13 +72,12 @@ This project uses environmental variables to configure functions.
 ### Using Docker
 
 ```bash
-docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.11
+docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.13
 ```
 
 ### Docker Compose
 
 ```yaml
-version: "3.3"
 services:
   embedder:
     ports:
@@ -90,7 +89,7 @@ services:
     volumes:
       - ./db:/var/db
       - ./uploads:/uploads
-    image: ghcr.io/waveringana/embedder:1.11
+    image: ghcr.io/waveringana/embedder:1.13
 ```
 
 ## 📜 License
