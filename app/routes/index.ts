@@ -26,6 +26,8 @@ import {
     processUploadedMedia,
 } from "../lib/middleware";
 
+const processVideo: boolean = process.env["EB_PROCESS_VIDEO"] !== "false";
+
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 /**Middleware to grab media from media database */
 
@@ -65,6 +67,11 @@ const fetchMedia: Middleware = (req, res, next) => {
 const router = express.Router();
 
 router.get('/progress-updates', (req, res) => {
+    if (!processVideo) {
+        res.status(404).send('Video processing is disabled');
+        return;
+    }
+
     console.log("SSE connection requested");  // Debug log
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -96,12 +103,12 @@ router.get(
     fetchMedia,
     (req: Request, res: Response) => {
         res.locals.filter = null;
-        res.render("index", { user: req.user });
+        res.render("index", { user: req.user, processVideo });
     }
 );
 
 router.get("/media-list", fetchMedia, (req: Request, res: Response) => {
-    res.render("partials/_fileList", { user: req.user });
+    res.render("partials/_fileList", { user: req.user, processVideo });
 });
 
 router.get(
@@ -189,21 +196,36 @@ router.get("/oembed/:file",
     }
 );
 
-router.post(
-    "/",
-    [
-        checkAuth,
-        upload.array("fileupload"),
-        handleUpload,
-        fetchMedia,
-        processUploadedMedia,
-        createEmbedData,
-    ],
-    (req: Request, res: Response) => {
-        return res.render("partials/_fileList", { user: req.user }); // Render only the file list partial
-    }
-);
-
+if (processVideo) {
+    router.post(
+        "/",
+        [
+            checkAuth,
+            upload.array("fileupload"),
+            handleUpload,
+            fetchMedia,
+            processUploadedMedia,
+            createEmbedData,
+        ],
+        (req: Request, res: Response) => {
+            return res.render("partials/_fileList", { user: req.user, processVideo }); // Render only the file list partial
+        }
+    );
+} else {
+    router.post(
+        "/",
+        [
+            checkAuth,
+            upload.array("fileupload"),
+            handleUpload,
+            fetchMedia,
+            createEmbedData
+        ],
+        (req: Request, res: Response) => {
+            return res.render("partials/_fileList", { user: req.user, processVideo }); // Render only the file list partial
+        }
+    );
+}
 router.post(
     "/sharex",
     [checkSharexAuth, upload.single("fileupload"), createEmbedData, handleUpload],

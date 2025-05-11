@@ -24,7 +24,10 @@ class FileUploader {
         this.dropArea = document.getElementById('dropArea');
         this.gallery = document.getElementById('gallery');
         this.setupEventListeners();
-        this.setupProgressUpdates();  // SSE logic for transcoding
+        // Only set up SSE if we're processing videos
+        if (document.body.dataset.processVideo === 'true') {
+            this.setupProgressUpdates();
+        }
     }
 
     setupEventListeners() {

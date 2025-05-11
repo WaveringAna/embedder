@@ -92,6 +92,8 @@ function onListening() {
     const bind = typeof addr === "string"
         ? "pipe " + addr
         : "port " + addr.port;
+    const processVideo = process.env["EB_PROCESS_VIDEO"] === "true" ? true : false;
+    console.log("Process video: " + processVideo);
     console.log("Embedder version: " + version);
     console.log("Listening on " + bind);
 }

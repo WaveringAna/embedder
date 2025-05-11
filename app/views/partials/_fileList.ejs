@@ -23,6 +23,7 @@ function sanitizeId(filename) {
               <div class="video">
                   <% const sanitizedId = file.path.replace(/[^a-z0-9]/gi, '_'); %>
                   
+                  <% if (processVideo) { %>
                   <div id="spinner-<%= sanitizedId %>" class="spinner" style="display: <%= file.isProcessed ? 'none' : 'block' %>;">
                       <div class="spinner-content">
                           Optimizing Video for Sharing...
@@ -30,8 +31,12 @@ function sanitizeId(filename) {
                   </div>
                   
                   <div id="media-container-<%= sanitizedId %>" class="video-container" style="display: <%= file.isProcessed ? 'block' : 'none' %>;">
+                  <% } else { %>
+                  <div class="video-container">
+                  <% } %>
                       <video class="image" autoplay loop muted playsinline>
                           <source src="/uploads/720p-<%= file.path %>">
+                          <source src="/uploads/<%= file.path %>">
                       </video>
                   </div>
           
@@ -40,7 +45,9 @@ function sanitizeId(filename) {
                           <small class="username"><%= file.username %></small>
                           <br>
                       <% } %>
-                      <a href="/gifv/<%= file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+                      <% if (processVideo) { %>
+                          <a href="/gifv/<%= file.path %>" onclick="copyA(event)">Copy as GIFv</a>
+                      <% } %>
                   </div>
               </div>
             <% } else if (mediaType === 'image') { %>

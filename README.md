@@ -21,6 +21,7 @@ A media host specialized in producing visually appealing embeds for services lik
 $ export EBPASS=changeme
 $ export EBPORT=3000
 $ export EBAPI_KEY=changeme # For ShareX support
+$ export EB_PROCESS_VIDEO=true # Enable video processing
 
 $ npm install
 $ npm start
@@ -57,22 +58,38 @@ Enabled at `/upload`. Requires authentication with key. `expire` key specifies d
 
 ### Configuration
 
-This project uses environmental variables to configure functions.
+This project uses environmental variables for configuration:
 
-`EBPASS` configures the password for the admin account.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `EBPASS` | Password for the admin account | required |
+| `EBAPI_KEY` | Key for API uploading (ShareX) | required |
+| `EBPORT` | Port the server runs on | required |
+| `EB_PROCESS_VIDEO` | Enable video processing/optimization | `true` |
+| `EB_ENCODER` | Video encoder to use (CPU, NVENC, QSV, etc.) | `CPU` |
+| `EB_FFMPEG_PATH` | Path to ffmpeg binary | auto-detected or bundled |
+| `EB_FFPROBE_PATH` | Path to ffprobe binary | auto-detected or bundled |
+| `EB_RANDOMIZE_NAMES` | Randomize uploaded file names | `false` |
 
-`EBAPI_KEY` configures the key for API uploading support typically used for ShareX.
+#### Video Processing
 
-`EBPORT` configures the port the server runs on.
+When `EB_PROCESS_VIDEO` is enabled (which is the default), Embedder will:
 
-`EB_FFMPEG_PATH` and `EB_FFPROBE_PATH` configures the path to the ffmpeg and ffprobe binaries respectively. If not set, it uses installed binaries set in the PATH. If none are detected, it will default to preinstalled binaries from the [node-ffmpeg-installer](https://www.npmjs.com/package/@ffmpeg-installer/ffmpeg) package.
+1. Process uploaded videos to create optimized 720p versions
+2. Show "Copy as GIFv" links for video files
+3. Display a processing spinner while videos are being optimized
 
-`EB_RANDOMIZE_NAMES` configures whether or not to randomize file names. If set to `true`, file names will be randomized. If not set or set to false, it will be `false`.
+If disabled by setting `EB_PROCESS_VIDEO=false`, videos will be served directly without processing, which can be useful on systems with limited resources.
 
 ### Using Docker
 
 ```bash
-docker run -d -p "3000:3000" -e EBPORT=3000 -e EBPASS=changeme -e EBAPI_KEY=changeme ghcr.io/waveringana/embedder:1.13
+docker run -d -p "3000:3000" \
+  -e EBPORT=3000 \
+  -e EBPASS=changeme \
+  -e EBAPI_KEY=changeme \
+  -e EB_PROCESS_VIDEO=true \
+  ghcr.io/waveringana/embedder:1.13
 ```
 
 ### Docker Compose
@@ -86,6 +103,7 @@ services:
       - EBPORT=3000
       - EBPASS=changeme
       - EBAPI_KEY=changeme
+      - EB_PROCESS_VIDEO=true
     volumes:
       - ./db:/var/db
       - ./uploads:/uploads
