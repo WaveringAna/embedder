@@ -1,6 +1,6 @@
 {
   "name": "embedder",
-  "version": "1.13",
+  "version": "1.14",
   "private": true,
   "description": "Media host for quick embeds to sites like discord",
   "keywords": [
