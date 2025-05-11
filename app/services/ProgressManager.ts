@@ -16,7 +16,7 @@ class ProgressManager {
     private constructor() {
         this.emitter = new EventEmitter();
         this.activeJobs = new Map();
-        this.processVideo = process.env["EB_PROCESS_VIDEO"] === "true";
+        this.processVideo = process.env["EB_PROCESS_VIDEO"] !== "false";
     }
 
     static getInstance(): ProgressManager {
