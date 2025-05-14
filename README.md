@@ -89,7 +89,7 @@ docker run -d -p "3000:3000" \
   -e EBPASS=changeme \
   -e EBAPI_KEY=changeme \
   -e EB_PROCESS_VIDEO=true \
-  ghcr.io/waveringana/embedder:1.14
+  ghcr.io/waveringana/embedder:1.14.1
 ```
 
 ### Docker Compose
@@ -107,7 +107,7 @@ services:
     volumes:
       - ./db:/var/db
       - ./uploads:/uploads
-    image: ghcr.io/waveringana/embedder:1.14
+    image: ghcr.io/waveringana/embedder:1.14.1
 ```
 
 ## 📜 License
