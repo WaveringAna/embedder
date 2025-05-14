@@ -121,36 +121,53 @@ router.get(
 
         const [filename, fileExtension] = extension(`uploads/${req.params.file}`);
         if (
-            fileExtension == ".mp4" ||
-            fileExtension == ".mov" ||
-            fileExtension == ".webm" ||
-            fileExtension == ".gif"
+            videoExtensions.includes(fileExtension)
         ) {
-            const imageData = ffProbe(
-                `uploads/${req.params.file}`,
-                filename,
-                fileExtension
-            );
+            try {
+                const imageData = ffProbe(
+                    `uploads/${req.params.file}`,
+                    filename,
+                    fileExtension
+                );
 
-            width = (await imageData).streams[0].width;
-            height = (await imageData).streams[0].height;
+                width = (await imageData).streams[0].width;
+                height = (await imageData).streams[0].height;
 
-            return res.render("gifv", {
-                url: url,
-                host: `${req.protocol}://${req.get("host")}`,
-                width: width,
-                height: height,
-            });
+                return res.render("gifv", {
+                    url: url,
+                    host: `${req.protocol}://${req.get("host")}`,
+                    width: width,
+                    height: height,
+                });
+            } catch (error) {
+                console.error("Error processing video:", error);
+                return res.render("gifv", {
+                    url: url,
+                    host: `${req.protocol}://${req.get("host")}`,
+                    width: 800,
+                    height: 600,
+                });
+            }
         } else {
-            const imageData = await imageProbe(
-                fs.createReadStream(`uploads/${req.params.file}`)
-            );
-            return res.render("gifv", {
-                url: url,
-                host: `${req.protocol}://${req.get("host")}`,
-                width: imageData.width,
-                height: imageData.height,
-            });
+            try {
+                const imageData = await imageProbe(
+                    fs.createReadStream(`uploads/${req.params.file}`)
+                );
+                return res.render("gifv", {
+                    url: url,
+                    host: `${req.protocol}://${req.get("host")}`,
+                    width: imageData.width,
+                    height: imageData.height,
+                });
+            } catch (error) {
+                console.error("Error processing image:", error);
+                return res.render("gifv", {
+                    url: url,
+                    host: `${req.protocol}://${req.get("host")}`,
+                    width: 800,
+                    height: 600,
+                });
+            }
         }
     }
 );
