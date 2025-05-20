@@ -34,10 +34,11 @@ function sanitizeId(filename) {
                   <% } else { %>
                   <div class="video-container">
                   <% } %>
-                      <video class="image" autoplay loop muted playsinline>
+                      <video class="image" autoplay loop muted playsinline onclick="copyOriginalGifUrl('<%= file.path %>')">
                           <source src="/uploads/720p-<%= file.path %>">
                           <source src="/uploads/<%= file.path %>">
                       </video>
+                      <button type="button" class="copy-original-gif" onclick="copyOriginalGifUrl('<%= file.path %>')">Copy original GIF URL</button>
                   </div>
           
                   <div class="overlay">

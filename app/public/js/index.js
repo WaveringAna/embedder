@@ -261,6 +261,13 @@ window.openFullSize = imageUrl => {
     modal.addEventListener('click', () => modal.remove());
 };
 
+window.copyOriginalGifUrl = function(filePath) {
+    const url = absolutePath('/uploads/' + filePath);
+    navigator.clipboard.writeText(url)
+        .then(() => console.log('Copied original GIF URL to clipboard'))
+        .catch(err => console.error('Copy failed:', err));
+};
+
 function sanitizeId(filename) {
     return filename.replace(/[^a-z0-9]/gi, '_');
 }
