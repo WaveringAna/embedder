@@ -21,6 +21,10 @@ const getMediaType = filename => {
 
 class FileUploader {
     constructor() {
+        this.CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+        this.LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // 20MB
+        this.MAX_CHUNK_RETRIES = 3;
+
         this.dropArea = document.getElementById('dropArea');
         this.gallery = document.getElementById('gallery');
         this.setupEventListeners();
@@ -132,63 +136,171 @@ class FileUploader {
     }
 
     async uploadFileWithProgress(file) {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            const formData = new FormData();
+        const expire = document.getElementById('expire').value;
+        const container = document.getElementById('uploadProgressContainer');
+        const percentElem = document.getElementById('uploadPercent');
+        const barElem = document.getElementById('uploadBar');
 
-            formData.append('fileupload', file);
-            formData.append('expire', document.getElementById('expire').value);
+        // Show progress UI
+        container.style.display = 'block';
+        barElem.style.width = '0%';
+        percentElem.textContent = '0%';
 
-            // Show the progress UI
-            const container = document.getElementById('uploadProgressContainer');
-            const percentElem = document.getElementById('uploadPercent');
-            const barElem = document.getElementById('uploadBar');
-            container.style.display = 'block';
+        if (file.size > this.LARGE_FILE_THRESHOLD) {
+            console.log(`File ${file.name} is large, using chunked upload.`);
+            try {
+                await this.uploadFileInChunks(file, expire, percentElem, barElem);
+                // Success message or UI update for chunked upload completion is handled in finalize
+            } catch (error) {
+                console.error(`Chunked upload failed for ${file.name}:`, error);
+                alert(`Upload failed for ${file.name}: ${error.message}`);
+                // Hide progress bar on error
+                container.style.display = 'none';
+                barElem.style.width = '0%';
+                percentElem.textContent = '0%';
+                throw error; // Re-throw to be caught by handleFiles if necessary
+            }
+        } else {
+            console.log(`File ${file.name} is small, using direct upload.`);
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
 
-            // Upload progress event
-            xhr.upload.addEventListener('progress', e => {
-                if (e.lengthComputable) {
-                    const percent = (e.loaded / e.total) * 100;
-                    percentElem.textContent = percent.toFixed(1) + '%';
-                    barElem.style.width = percent + '%';
-                }
-            });
+                formData.append('fileupload', file);
+                formData.append('expire', expire);
 
-            xhr.upload.addEventListener('load', () => {
-                console.log('Upload completed for', file.name);
-            });
+                xhr.upload.addEventListener('progress', e => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        percentElem.textContent = percent.toFixed(1) + '%';
+                        barElem.style.width = percent + '%';
+                    }
+                });
 
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        // We got a success from the server, re-render the file list
-                        console.log('Server returned success for', file.name);
+                xhr.upload.addEventListener('load', () => {
+                    console.log('Direct upload completed for', file.name);
+                });
 
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4) {
                         // Hide & reset progress bar
                         container.style.display = 'none';
                         barElem.style.width = '0%';
                         percentElem.textContent = '0%';
 
-                        // Insert updated partial into #embedder-list
-                        document.getElementById('embedder-list').innerHTML = xhr.responseText;
-                        htmx.process(document.getElementById('embedder-list'))
-                        // Clear any "preview" in the gallery
-                        this.gallery.innerHTML = '';
-
-                        resolve();
-                    } else {
-                        // Some error from the server
-                        const msg = `Upload failed: ${xhr.status} - ${xhr.responseText}`;
-                        console.error(msg);
-                        alert(msg);
-                        reject(new Error(msg));
+                        if (xhr.status === 200) {
+                            console.log('Server returned success for direct upload:', file.name);
+                            document.getElementById('embedder-list').innerHTML = xhr.responseText;
+                            htmx.process(document.getElementById('embedder-list'));
+                            this.gallery.innerHTML = '';
+                            resolve();
+                        } else {
+                            const msg = `Upload failed: ${xhr.status} - ${xhr.responseText}`;
+                            console.error(msg);
+                            alert(msg);
+                            reject(new Error(msg));
+                        }
                     }
-                }
-            };
+                };
+                xhr.open('POST', '/');
+                xhr.send(formData);
+            });
+        }
+    }
 
-            xhr.open('POST', '/');
-            xhr.send(formData);
-        });
+    async uploadFileInChunks(file, expire, percentElem, barElem) {
+        const totalChunks = Math.ceil(file.size / this.CHUNK_SIZE);
+        console.log(`Uploading ${file.name} in ${totalChunks} chunks of size ${this.CHUNK_SIZE} bytes.`);
+
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * this.CHUNK_SIZE;
+            const end = Math.min(start + this.CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('chunk', chunk, file.name); // file.name for the blob
+            formData.append('originalFilename', file.name);
+            formData.append('chunkIndex', String(chunkIndex));
+            formData.append('totalChunks', String(totalChunks));
+            // 'expire' is not sent with chunks, but with /complete
+
+            let retries = 0;
+            let success = false;
+            while (retries < this.MAX_CHUNK_RETRIES && !success) {
+                try {
+                    console.log(`Uploading chunk ${chunkIndex + 1}/${totalChunks} for ${file.name} (Attempt ${retries + 1})`);
+                    const response = await fetch('/upload/chunk', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Chunk upload failed: ${response.status} - ${errorData}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log(`Chunk ${result.chunkIndex} uploaded successfully for ${result.originalFilename}`);
+                    success = true;
+                } catch (error) {
+                    retries++;
+                    console.error(`Error uploading chunk ${chunkIndex} for ${file.name}, attempt ${retries}:`, error);
+                    if (retries >= this.MAX_CHUNK_RETRIES) {
+                        throw new Error(`Failed to upload chunk ${chunkIndex} for ${file.name} after ${this.MAX_CHUNK_RETRIES} attempts. Error: ${error.message}`);
+                    }
+                    // Optional: Add a small delay before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+                }
+            }
+            // Update progress after each chunk
+            const percent = ((chunkIndex + 1) / totalChunks) * 100;
+            percentElem.textContent = percent.toFixed(1) + '%';
+            barElem.style.width = percent + '%';
+        }
+
+        // All chunks uploaded, finalize
+        console.log(`All chunks uploaded for ${file.name}. Finalizing...`);
+        await this.finalizeChunkedUpload(file.name, totalChunks, expire);
+    }
+
+    async finalizeChunkedUpload(originalFilename, totalChunks, expire) {
+        const formData = new FormData();
+        formData.append('originalFilename', originalFilename);
+        formData.append('totalChunks', String(totalChunks));
+        formData.append('expire', expire); // Send expire with the completion request
+
+        try {
+            const response = await fetch('/upload/complete', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(`Finalization failed: ${response.status} - ${errorData}`);
+            }
+
+            // Success, update UI
+            const responseText = await response.text();
+            document.getElementById('embedder-list').innerHTML = responseText;
+            htmx.process(document.getElementById('embedder-list'));
+            this.gallery.innerHTML = ''; // Clear any "preview"
+            
+            // Hide progress bar elements after successful completion
+            const container = document.getElementById('uploadProgressContainer');
+            const barElem = document.getElementById('uploadBar');
+            const percentElem = document.getElementById('uploadPercent');
+            if (container) container.style.display = 'none';
+            if (barElem) barElem.style.width = '0%';
+            if (percentElem) percentElem.textContent = '0%';
+
+            console.log(`File ${originalFilename} successfully uploaded and processed.`);
+
+        } catch (error) {
+            console.error(`Error finalizing upload for ${originalFilename}:`, error);
+            alert(`Failed to finalize upload for ${originalFilename}: ${error.message}`);
+            throw error; // Re-throw for higher level handling if needed
+        }
     }
 }
 
