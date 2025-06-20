@@ -1,7 +1,7 @@
 import type { RequestHandler as Middleware, NextFunction } from "express";
 
 import fs from "fs";
-import process from "process";
+import { cfg } from "../config";
 
 import { extension, videoExtensions, imageExtensions, oembedObj } from "./lib";
 import { insertToDB } from "./db";
@@ -17,8 +17,7 @@ export const checkAuth: Middleware = (req, res, next) => {
 
 /**Checks shareX auth key */
 export const checkSharexAuth: Middleware = (req, res, next) => {
-    const auth =
-        process.env.EBAPI_KEY || process.env.EBPASS || "pleaseSetAPI_KEY";
+    const auth = cfg.apiKey;
     let key = null;
 
     if (req.headers["key"]) {

@@ -4,8 +4,11 @@ import ffmpeg, { FfprobeData, ffprobe } from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 import which from "which";
+import { cfg } from "../config";
 
 import fs from "fs";
+
+const { promises: fsp } = fs;
 
 //import { wss } from "./ws";
 
@@ -69,13 +72,13 @@ const getExecutablePath = (
     }
 };
 
-const ffmpegPath = getExecutablePath(
+const ffmpegPath = cfg.ffmpegPath ?? getExecutablePath(
     "EB_FFMPEG_PATH",
     "ffmpeg",
     ffmpegInstaller,
 );
 
-const ffprobePath = getExecutablePath(
+const ffprobePath = cfg.ffprobePath ?? getExecutablePath(
     "EB_FFPROBE_PATH",
     "ffprobe",
     ffprobeInstaller,
@@ -87,24 +90,13 @@ console.log(`Using ffprobe from path: ${ffprobePath}`);
 ffmpeg.setFfmpegPath(ffmpegPath!);
 ffmpeg.setFfprobePath(ffprobePath!);
 
-const checkEnvForEncoder = () => {
-    const envEncoder = process.env.EB_ENCODER?.toUpperCase();
-
-    if (envEncoder && Object.keys(EncodingType).includes(envEncoder)) {
-        setEncodingType(
-      EncodingType[envEncoder as keyof typeof EncodingType] as EncodingType,
-        );
-        console.log(
-            `Setting encoding type to ${envEncoder} based on environment variable.`,
-        );
-    } else if (envEncoder) {
-        console.warn(
-            `Invalid encoder value "${envEncoder}" in environment variable, defaulting to CPU.`,
-        );
-    }
-};
-
-checkEnvForEncoder();
+// set encoder from cfg
+if (Object.keys(EncodingType).includes(cfg.encoder)) {
+    setEncodingType(EncodingType[cfg.encoder as keyof typeof EncodingType]);
+    console.log(`Using encoder ${cfg.encoder}`);
+} else {
+    console.warn(`Invalid encoder value "${cfg.encoder}" provided, defaulting to CPU.`);
+}
 
 /**
  * Downscale a video using ffmpeg with various encoding options.
@@ -146,10 +138,9 @@ export const ffmpegDownscale = (
             .outputOptions(outputOptions)
             .output(`uploads/720p-${filename}${extension}`)
             .on("progress", function (progress) {
-                fs.writeFileSync(
-                    progressFile,
-                    JSON.stringify({ progress: progress.percent / 100 }),
-                );
+                // fire-and-forget async write to avoid blocking
+                fsp.writeFile(progressFile, JSON.stringify({ progress: (progress.percent ?? 0) / 100 }))
+                    .catch(() => {/* ignore */});
             })
             .on("end", () => {
                 console.log(
@@ -159,15 +150,13 @@ export const ffmpegDownscale = (
                 );
 
                 // Delete the .processing file
-                fs.unlinkSync(progressFile);
+                fsp.unlink(progressFile).catch(() => {/* ignore */});
 
                 resolve();
             })
             .on("error", (e) => {
                 // Ensure to delete the .processing file even on error
-                if (fs.existsSync(progressFile)) {
-                    fs.unlinkSync(progressFile);
-                }
+                fsp.unlink(progressFile).catch(() => {/* ignore */});
 
                 reject(new Error(e));
             })
@@ -231,10 +220,9 @@ export const ffmpegConvert = (
             .outputFormat(outputFormat)
             .output(`uploads/${filename}${outputFormat}`)
             .on("progress", function (progress) {
-                fs.writeFileSync(
-                    progressFile,
-                    JSON.stringify({ progress: progress.percent / 100 }),
-                );
+                // fire-and-forget async write to avoid blocking
+                fsp.writeFile(progressFile, JSON.stringify({ progress: (progress.percent ?? 0) / 100 }))
+                    .catch(() => {/* ignore */});
             })
             .on("end", function () {
                 console.log(

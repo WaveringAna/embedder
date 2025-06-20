@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { cfg } from '../config';
 
 export interface ProgressUpdate {
     filename: string;
@@ -16,7 +17,7 @@ class ProgressManager {
     private constructor() {
         this.emitter = new EventEmitter();
         this.activeJobs = new Map();
-        this.processVideo = process.env["EB_PROCESS_VIDEO"] !== "false";
+        this.processVideo = cfg.processVideo;
     }
 
     static getInstance(): ProgressManager {

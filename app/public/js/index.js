@@ -161,7 +161,7 @@ class FileUploader {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        // We got a success from the server, re-render the file list
+                        // We got a success from the server, rerender the file list
                         console.log('Server returned success for', file.name);
 
                         // Hide & reset progress bar
@@ -171,8 +171,9 @@ class FileUploader {
 
                         // Insert updated partial into #embedder-list
                         document.getElementById('embedder-list').innerHTML = xhr.responseText;
-                        htmx.process(document.getElementById('embedder-list'))
-                        // Clear any "preview" in the gallery
+                        htmx.process(document.getElementById('embedder-list'));
+
+                        // Clear any preview in the gallery
                         this.gallery.innerHTML = '';
 
                         resolve();
@@ -193,31 +194,72 @@ class FileUploader {
 }
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     new FileUploader();
 
     // Setup search functionality
-    const searchInput = document.getElementById('search');
-    if (searchInput) {
-        searchInput.addEventListener('input', e => {
-            const searchValue = e.target.value.toLowerCase();
-            const mediaItems = document.querySelectorAll('ul.embedder-list li');
+    const searchInput = document.getElementById("search");
+    const embedderList = document.getElementById('embedder-list');
+    if (searchInput && embedderList) {
+        // Handle animation end once via event delegation
+        embedderList.addEventListener("animationend", event => {
+            const item = event.target.closest("li");
+            if (!item) return;
+            // When the hide animation finishes keep the item out of flow
+            if (item.classList.contains("hide")) {
+                item.style.display = "none";
+            }
+        });
 
+        searchInput.addEventListener("input", e => {
+            const searchValue = e.target.value.toLowerCase();
+            const mediaItems = embedderList.querySelectorAll("li");
             mediaItems.forEach(item => {
                 const matches = item.id.toLowerCase().includes(searchValue);
-                item.classList.toggle('hide', !matches);
-                item.classList.toggle('show', matches);
 
-                item.addEventListener('animationend', function handler() {
-                    if (!matches && searchValue !== '') {
-                        this.style.display = 'none';
-                    }
-                    this.removeEventListener('animationend', handler);
-                });
+                // Always reset display so animations have effect
+                item.style.display = "block";
+                // Toggle animation classes
+                item.classList.toggle("hide", !matches);
+                item.classList.toggle("show", matches);
             });
         });
     }
 });
+
+// Lazily pause / play videos depending on visibility
+function setupLazyVideoPause() {
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (!video) return;
+            if (entry.isIntersecting) {
+                // Resume playback when in view
+                if (video.paused) {
+                    video.play().catch(() => {});
+                }
+            } else {
+                // Pause when out of view
+                if (!video.paused) {
+                    video.pause();
+                }
+            }
+        });
+    }, { threshold: 0.25 });
+
+    const observeVideos = () => {
+        document.querySelectorAll("video.image, .video-container video").forEach(v => observer.observe(v));
+    };
+
+    // Initial observation
+    observeVideos();
+
+    // Observe future videos added via htmx swaps
+    document.body.addEventListener("htmx:afterSettle", observeVideos);
+}
+
+// Kick off lazy video observer after everything loads
+document.addEventListener("DOMContentLoaded", setupLazyVideoPause);
 
 // Utility functions for the media list
 window.copyURI = e => {

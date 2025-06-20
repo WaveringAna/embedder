@@ -19,6 +19,7 @@ import adduserRouter from "./routes/adduser";
 import settingsRouter from "./routes/settings";
 
 import { db, expire, createDatabase, updateDatabase, MediaRow } from "./lib/db";
+import { cfg } from "./config";
 
 const app = express();
 const server = http.createServer(app);
@@ -92,8 +93,7 @@ function onListening() {
     const bind = typeof addr === "string"
         ? "pipe " + addr
         : "port " + addr.port;
-    const processVideo = process.env["EB_PROCESS_VIDEO"] === "true" ? true : false;
-    console.log("Process video: " + processVideo);
+    console.log("Process video: " + cfg.processVideo);
     console.log("Embedder version: " + version);
     console.log("Listening on " + bind);
 }

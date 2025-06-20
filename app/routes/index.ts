@@ -10,6 +10,7 @@ import express from "express";
 import imageProbe from "probe-image-size";
 
 import { ffProbe } from "../lib/ffmpeg";
+import { cfg } from "../config";
 
 import fs from "fs";
 import path from "path";
@@ -26,7 +27,7 @@ import {
     processUploadedMedia,
 } from "../lib/middleware";
 
-const processVideo: boolean = process.env["EB_PROCESS_VIDEO"] !== "false";
+const { processVideo } = cfg;
 
 const upload = multer({ storage: fileStorage /**, fileFilter: fileFilter**/ }); //maybe make this a env variable?
 /**Middleware to grab media from media database */
@@ -39,15 +40,22 @@ const fetchMedia: Middleware = (req, res, next) => {
 
     const params: any[] = admin ? [] : [req.user.username];
 
-    db.all(query, params, (err: Error, rows: []) => {
+    db.all(query, params, async (err: Error, rows: []) => {
         if (err) {
             console.error("Error fetching media:", err);
             return res.status(500).send("Database error");
         }
-        const files = rows.map((row: MediaRow) => {
-            const isProcessed = videoExtensions.includes(extension(row.path)[1]) ?
-                fs.existsSync(`uploads/720p-${row.path}`) :
-                true;
+
+        const files = await Promise.all(rows.map(async (row: MediaRow) => {
+            let isProcessed = true;
+            if (videoExtensions.includes(extension(row.path)[1])) {
+                try {
+                    await fs.promises.access(`uploads/720p-${row.path}`);
+                    isProcessed = true;
+                } catch {
+                    isProcessed = false;
+                }
+            }
 
             return {
                 id: row.id,
@@ -57,7 +65,8 @@ const fetchMedia: Middleware = (req, res, next) => {
                 url: "/" + row.id,
                 isProcessed
             };
-        });
+        }));
+
         res.locals.files = files.reverse();
         res.locals.Count = files.length;
         next();
