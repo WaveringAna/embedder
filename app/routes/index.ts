@@ -305,7 +305,7 @@ router.get(
     },
     [fetchMedia],
     (req: Request, res: Response) => {
-        return res.render("partials/_fileList", { user: req.user });
+        return res.render("partials/_fileList", { user: req.user, processVideo });
     }
 );
 
