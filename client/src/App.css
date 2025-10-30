@@ -1,0 +1,148 @@
+/* Import existing CSS files */
+@import './css/base.css';
+@import './css/index.css';
+@import './css/app.css';
+
+/* Additional React-specific styles */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+  color: #c00;
+}
+
+.search-container {
+  padding: 1rem;
+  text-align: center;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.no-files {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  list-style: none;
+}
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-weight: bold;
+}
+
+.media-wrapper {
+  position: relative;
+  min-height: 200px;
+}
+
+.media-actions-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.media-wrapper:hover .media-actions-overlay {
+  opacity: 1;
+}
+
+.overlay-btn {
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+.overlay-btn.gifv-btn {
+  background: rgba(115, 173, 33, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.overlay-btn.gifv-btn:hover {
+  background: rgba(115, 173, 33, 1);
+  transform: scale(1.1);
+}
+
+.overlay-btn.delete-btn {
+  background: rgba(193, 48, 48, 0.9);
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  width: 36px;
+  padding: 0;
+}
+
+.overlay-btn.delete-btn:hover {
+  background: rgba(193, 48, 48, 1);
+  transform: scale(1.1);
+}
+
+.expire-date {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+.modal img,
+.modal video {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}

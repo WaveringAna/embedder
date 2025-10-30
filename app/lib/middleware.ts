@@ -10,7 +10,7 @@ import { MediaProcessor } from "../services/MediaProcesser";
 
 export const checkAuth: Middleware = (req, res, next) => {
     if (!req.user) {
-        return res.status(401);
+        return res.status(401).json({ error: 'Not authenticated' });
     }
     next();
 };

@@ -17,6 +17,7 @@ import authRouter from "./routes/auth";
 import indexRouter from "./routes/index";
 import adduserRouter from "./routes/adduser";
 import settingsRouter from "./routes/settings";
+import apiRouter from "./routes/api";
 
 import { db, expire, createDatabase, updateDatabase, MediaRow } from "./lib/db";
 import { cfg } from "./config";
@@ -112,6 +113,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/assets', express.static(path.join(__dirname, "client/assets")));
 app.use(session({
     secret: process.env.EBSECRET || "pleasechangeme",
     resave: false,
@@ -123,10 +125,11 @@ app.use(session({
 }));
 app.use(passport.authenticate("session"));
 
-app.use("/", indexRouter);
+app.use("/api", apiRouter);
 app.use("/", authRouter);
 app.use("/", adduserRouter);
 app.use("/", settingsRouter);
+app.use("/", indexRouter);
 
 app.use("/uploads", express.static("uploads"));
 

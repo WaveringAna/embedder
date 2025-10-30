@@ -81,25 +81,71 @@ router.get('/progress-updates', (req, res) => {
         return;
     }
 
-    console.log("SSE connection requested");  // Debug log
+    console.log("[SSE] New connection requested");
 
+    // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
-    // Send an initial message to confirm connection
+    // Disable Express response buffering
+    res.flushHeaders();
+
+    // Send initial connection message
     res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
 
+    // Set up keep-alive heartbeat to prevent connection timeout
+    const keepAliveInterval = setInterval(() => {
+        if (!res.writableEnded) {
+            res.write(`: keepalive\n\n`);
+        } else {
+            clearInterval(keepAliveInterval);
+        }
+    }, 15000); // Send heartbeat every 15 seconds
+
+    // Create update callback that checks connection state
     const sendUpdate = (data: any) => {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
+        if (!res.writableEnded) {
+            try {
+                res.write(`data: ${JSON.stringify(data)}\n\n`);
+            } catch (err) {
+                console.error("[SSE] Error writing to response:", err);
+                cleanup();
+            }
+        } else {
+            console.log("[SSE] Attempted to write to closed connection, cleaning up");
+            cleanup();
+        }
     };
 
+    // Cleanup function
+    const cleanup = () => {
+        console.log("[SSE] Connection closed, cleaning up");
+        clearInterval(keepAliveInterval);
+        progressManager.unsubscribeFromUpdates(sendUpdate);
+
+        if (!res.writableEnded) {
+            try {
+                res.end();
+            } catch (err) {
+                console.error("[SSE] Error ending response:", err);
+            }
+        }
+    };
+
+    // Subscribe to progress updates
     progressManager.subscribeToUpdates(sendUpdate);
 
     // Clean up on client disconnect
-    req.on('close', () => {
-        console.log("SSE connection closed");  // Debug log
-        progressManager.unsubscribeFromUpdates(sendUpdate);
+    req.on('close', cleanup);
+    req.on('error', (err) => {
+        console.error("[SSE] Request error:", err);
+        cleanup();
+    });
+    res.on('error', (err) => {
+        console.error("[SSE] Response error:", err);
+        cleanup();
     });
 });
 
@@ -107,12 +153,8 @@ router.get(
     "/",
     (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) return res.render("home");
-        next();
-    },
-    fetchMedia,
-    (req: Request, res: Response) => {
-        res.locals.filter = null;
-        res.render("index", { user: req.user, processVideo });
+        // Serve the React app for authenticated users
+        res.sendFile(path.join(__dirname, "../../dist/client/index.html"));
     }
 );
 
