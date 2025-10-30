@@ -117,6 +117,7 @@ export const ffmpegDownscale = (
     path: string,
     filename: string,
     extension: string,
+    onProgress?: (progress: number) => void,
 ): Promise<void> => {
     const startTime = Date.now();
     const outputOptions = [
@@ -138,8 +139,15 @@ export const ffmpegDownscale = (
             .outputOptions(outputOptions)
             .output(`uploads/720p-${filename}${extension}`)
             .on("progress", function (progress) {
-                // fire-and-forget async write to avoid blocking
-                fsp.writeFile(progressFile, JSON.stringify({ progress: (progress.percent ?? 0) / 100 }))
+                const progressValue = (progress.percent ?? 0) / 100;
+
+                // Call progress callback if provided
+                if (onProgress) {
+                    onProgress(progressValue);
+                }
+
+                // Also write to file for backward compatibility
+                fsp.writeFile(progressFile, JSON.stringify({ progress: progressValue }))
                     .catch(() => {/* ignore */});
             })
             .on("end", () => {

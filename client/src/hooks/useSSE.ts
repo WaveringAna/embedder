@@ -16,13 +16,14 @@ export const useSSE = ({ onMessage, onError, onOpen, enabled = true }: UseSSEOpt
   const RECONNECT_DELAY = 3000;
 
   const connect = useCallback(() => {
-    if (!enabled || eventSourceRef.current?.readyState === EventSource.OPEN) {
+    if (!enabled) {
       return;
     }
 
     // Clean up existing connection
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
 
     console.log('[SSE] Connecting to /progress-updates...');
@@ -53,22 +54,18 @@ export const useSSE = ({ onMessage, onError, onOpen, enabled = true }: UseSSEOpt
     evtSource.onerror = (error) => {
       console.error('[SSE] Connection error:', error);
 
-      if (evtSource.readyState === EventSource.CLOSED) {
-        console.log('[SSE] Connection closed by server');
+      // Don't reconnect on normal closure or if already reconnecting
+      if (evtSource.readyState === EventSource.CLOSED && reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts.current++;
+        const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current - 1);
 
-        // Attempt to reconnect with exponential backoff
-        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts.current++;
-          const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current - 1);
+        console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS})`);
 
-          console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS})`);
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, delay);
-        } else {
-          console.error('[SSE] Max reconnect attempts reached');
-        }
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, delay);
+      } else if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+        console.error('[SSE] Max reconnect attempts reached');
       }
 
       if (onError) onError(error);
@@ -92,7 +89,7 @@ export const useSSE = ({ onMessage, onError, onOpen, enabled = true }: UseSSEOpt
         eventSourceRef.current = null;
       }
     };
-  }, [enabled, connect]);
+  }, [enabled]); // Remove 'connect' from dependencies to prevent re-creation
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

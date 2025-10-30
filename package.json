@@ -21,7 +21,8 @@
   },
   "license": "Unlicense",
   "scripts": {
-    "start": "node ./dist/app.js",
+    "start": "node ./dist/app-hono.js",
+    "start:old": "node ./dist/app.js",
     "clean": "rimraf dist/",
     "copy-files": "copyfiles -a -u 1 app/public/* app/views/* app/public/**/* app/views/**/* dist/",
     "tsc": "tsc",
@@ -29,12 +30,17 @@
     "build:server": "npm run tsc && npm run copy-files",
     "postinstall": "npm run build:server && npm run build:client",
     "build": "npm run clean && npm run build:server && npm run build:client",
-    "dev": "ts-node-dev --respawn --watch ./app/views/*.ejs --transpile-only ./app/app.ts",
+    "dev": "ts-node-dev --respawn --watch ./app/views/*.ejs --transpile-only ./app/app-hono.ts",
+    "dev:old": "ts-node-dev --respawn --watch ./app/views/*.ejs --transpile-only ./app/app.ts",
     "dev:client": "vite"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffprobe-installer/ffprobe": "^1.4.1",
+    "@hono/node-server": "^1.19.5",
+    "@hono/zod-validator": "^0.7.4",
+    "better-sqlite3": "^12.4.1",
+    "bullmq": "^5.62.2",
     "connect-sqlite3": "^0.9.13",
     "cookie-parser": "~1.4.4",
     "dotenv": "^8.6.0",
@@ -42,7 +48,9 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "fluent-ffmpeg": "^2.1.2",
+    "hono": "^4.10.4",
     "http-errors": "~1.6.3",
+    "ioredis": "^5.8.2",
     "mkdirp": "^1.0.4",
     "multer": "^1.4.5-lts.1",
     "passport": "^0.6.0",
@@ -52,12 +60,15 @@
     "react-dom": "^19.2.0",
     "sqlite3": "^5.0.2",
     "which": "^4.0.0",
-    "ws": "^8.17.0"
+    "ws": "^8.17.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/connect-sqlite3": "^0.9.1",
     "@types/cookie-parser": "^1.4.3",
     "@types/dotenv": "^8.2.0",
+    "@types/ejs": "^3.1.5",
     "@types/express": "^4.17.14",
     "@types/express-session": "^1.17.5",
     "@types/fluent-ffmpeg": "^2.1.20",
@@ -79,7 +90,7 @@
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^4.9.3",
+    "typescript": "^5.9.3",
     "vite": "^7.1.12"
   }
 }
